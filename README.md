@@ -16,28 +16,36 @@
 
 ## 🔧 部署環境設定
 
-| 項目       | 值                           |
-|------------|------------------------------|
-| 執行指令   | `uvicorn main:app --host=0.0.0.0 --port=8080` |
-| Python 環境 | 3.10                         |
-| 必要環境變數 | `LINE_CHANNEL_SECRET`、`LINE_CHANNEL_ACCESS_TOKEN` |
+| 項目             | 值                                                   |
+|------------------|------------------------------------------------------|
+| 執行指令         | `uvicorn main:app --host=0.0.0.0 --port=8080`         |
+| Python 環境      | 3.10                                                 |
+| 必要環境變數     | `LINE_CHANNEL_SECRET`、`LINE_CHANNEL_ACCESS_TOKEN` |
 
 ---
 
 ## 📦 專案結構範例
-danielbot-fastapi-webhook/ ├── main.py # FastAPI 主程式 ├── requirements.txt # 相依套件 ├── routers/ │ └── webhook.py # LINE webhook 子路由
+danielbot-fastapi-webhook/ ├── main.py # FastAPI 主程式 ├── requirements.txt # 相依套件 └── routers/ └── webhook.py # LINE webhook 子路由
+
 ---
 
 ## 📝 範例：Copilot NLU 呼叫
 
-```json
+```http
 POST /copilot-nlu
+Content-Type: application/json
+
 {
   "text": "幫我查 2330 股價"
 }
-
-回應：
 {
   "intent": "query_stock_price",
   "confidence": 0.92
 }
+🧩 後續擴充構想
+整合台灣證交所資料查詢 API（如 TWSE/MOPS）
+
+加入使用者匿名識別機制、支援多帳戶
+
+增加 LINE broadcast 功能與 Copilot 模型串接
+
