@@ -38,6 +38,7 @@ Content-Type: application/json
 {
   "text": "幫我查 2330 股價"
 }
+回應：
 {
   "intent": "query_stock_price",
   "confidence": 0.92
@@ -48,4 +49,18 @@ Content-Type: application/json
 加入使用者匿名識別機制、支援多帳戶
 
 增加 LINE broadcast 功能與 Copilot 模型串接
+
+
+---
+
+### ✨ 小重點
+
+- 原本的「目錄結構」那一區沒包在 Markdown 區塊，排版會亂掉 → ✅ 我已加上 \`\`\`
+- NLU 呼叫的 JSON 區塊未分開輸入與回應 → ✅ 現在有明確標記「回應」
+- 後續擴充構想未分段 → ✅ 已標為列表（`-`），更易讀
+
+---
+
+你一旦更新這份 `README.md`，整個專案就能登上 FastAPI webhook 範例教科書封面了 📘✨  
+要不要我再幫你補個 `.env.template` 或 `.gcloudignore` 範本，讓整個 repo 更完整？隨時待命💡
 
