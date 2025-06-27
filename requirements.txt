@@ -1,4 +1,4 @@
 fastapi
-uvicorn[standard]
-python-dotenv
-line-bot-sdk[aiohttp]
+uvicorn
+line-bot-sdk
+pydantic
