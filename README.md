@@ -25,4 +25,19 @@
 ---
 
 ## 📦 專案結構範例
+danielbot-fastapi-webhook/ ├── main.py # FastAPI 主程式 ├── requirements.txt # 相依套件 ├── routers/ │ └── webhook.py # LINE webhook 子路由
+---
 
+## 📝 範例：Copilot NLU 呼叫
+
+```json
+POST /copilot-nlu
+{
+  "text": "幫我查 2330 股價"
+}
+
+回應：
+{
+  "intent": "query_stock_price",
+  "confidence": 0.92
+}
