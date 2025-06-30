@@ -7,6 +7,17 @@
 2. 確保 `requirements.txt`、`Dockerfile` 存在
 3. push 到 GitHub，Cloud Build 將自動建構與部署
 
+   ## ☁️ 部署到 Cloud Run
+
+1. 複製 `.env.template` → 命名為 `.env`，並填入你的憑證
+2. 確保 `requirements.txt`、`Dockerfile` 存在，包含 `uvicorn` 套件
+3. Push 至 GitHub 主分支，Cloud Build 將自動建構並部署
+4. 部署成功後，Webhook URL 預設為：https://YOUR_PROJECT_ID.a.run.app/webhook
+5. 回到 LINE Developers 後台貼入並點選「Verify」
+
+
+
+
 
 ---
 
