@@ -1,4 +1,4 @@
-# DanielBot Webhook + Copilot Endpoints   
+# DanielBot Webhook + Copilot Endpoints 
 
 這是一個部署於 Google Cloud Run 的 FastAPI 專案，整合了 LINE Bot webhook、Copilot 系統警示、以及自然語言意圖辨識（NLU）三大功能。
 ## 🚀 Deploy to Cloud Run
