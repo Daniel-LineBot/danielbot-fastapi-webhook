@@ -1,8 +1,9 @@
-.env
+# 忽略無關部署的檔案與目錄
 __pycache__/
-*.pyc
-*.pyo
-.git
-.gcloudignore
-.dockerignore
+*.py[cod]
 *.log
+.env
+.gcloudignore
+.git
+.venv/
+.DS_Store
