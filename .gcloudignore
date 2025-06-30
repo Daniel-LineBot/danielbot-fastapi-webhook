@@ -1,10 +1,9 @@
-# 確保敏感檔案不會被推送到 Cloud Run
-
+# 忽略無需部署的項目
+.git
+.gitignore
 .env
 __pycache__/
-*.pyc
-*.pyo
-.gcloudignore
-.dockerignore
-.git
+*.py[cod]
 *.log
+.DS_Store
+
