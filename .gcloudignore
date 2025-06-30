@@ -1,0 +1,10 @@
+# 確保敏感檔案不會被推送到 Cloud Run
+
+.env
+__pycache__/
+*.pyc
+*.pyo
+.gcloudignore
+.dockerignore
+.git
+*.log
