@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 import httpx
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 router = APIRouter()
 
@@ -11,6 +11,7 @@ async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None
         return await get_historical_data(stock_id, date)
     else:
         return await get_realtime_data(stock_id)
+
 
 async def get_realtime_data(stock_id: str):
     url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{stock_id}.tw"
@@ -33,37 +34,41 @@ async def get_realtime_data(stock_id: str):
         "產業別": info.get("ind", "N/A")
     }
 
+
 async def get_historical_data(stock_id: str, date: str):
-    # 驗證日期格式（YYYYMMDD）
     try:
-        dt = datetime.strptime(date, "%Y%m%d")
-        year_month = dt.strftime("%Y%m")
-        day = dt.strftime("%-d").lstrip("0")
+        target_date = datetime.strptime(date, "%Y%m%d")
     except ValueError:
         return {"error": "請使用 YYYYMMDD 格式輸入日期（例如 20250701）"}
 
-    url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={year_month}01&stockNo={stock_id}"
+    retries = 7
+    for _ in range(retries):
+        query_month = target_date.strftime("%Y%m")
+        query_day_str = f"{target_date.year}/{target_date.month}/{target_date.day}"
+        url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={query_month}01&stockNo={stock_id}"
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        data = response.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            data = response.json()
 
-    if "data" not in data or not data["data"]:
-        return {"error": "查無該股票歷史資料"}
+        if "data" in data and data["data"]:
+            for row in data["data"]:
+                if row[0].startswith(query_day_str):
+                    return {
+                        "資料來源": "歷史盤後",
+                        "股票代號": stock_id,
+                        "查詢日期": target_date.strftime("%Y%m%d"),
+                        "開盤": row[3],
+                        "最高": row[4],
+                        "最低": row[5],
+                        "收盤": row[6],
+                        "成交量(張)": row[1],
+                    }
 
-    # 找出符合日期的那一筆
-    for row in data["data"]:
-        if row[0].startswith(f"{dt.year}/{dt.month}/{int(day)}"):
-            return {
-                "資料來源": "歷史盤後",
-                "查詢日期": date,
-                "股票代號": stock_id,
-                "開盤": row[3],
-                "最高": row[4],
-                "最低": row[5],
-                "收盤": row[6],
-                "成交量(張)": row[1],
-            }
+        target_date -= timedelta(days=1)
 
-    return {"error": f"{date} 查無該股票交易紀錄（可能為非交易日）"}
+    return {
+        "error": f"{date} 起往前 7 日內查無任何交易紀錄，可能為連續假日或 TWSE 尚未釋出資料"
+    }
+
 
