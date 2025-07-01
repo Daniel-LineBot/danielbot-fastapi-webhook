@@ -11,6 +11,9 @@ app.include_router(webhook.router)
 
 print("👋 FastAPI app 正在啟動中…")
 
+from routers import stock
+app.include_router(stock.router)
+
 
 # LINE Bot 憑證
 LINE_SECRET = os.getenv("LINE_CHANNEL_SECRET")
