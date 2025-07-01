@@ -26,4 +26,4 @@ async def get_stock_info(stock_id: str):
         "產業別": info.get("ind", "N/A")
     }
 
-    return result
+    return result 
