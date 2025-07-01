@@ -7,7 +7,7 @@ from utils.verifier import verify_signature
 router = APIRouter()
 handler = AsyncWebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 
-@router.post("")
+@router.post("/webhook")
 async def line_webhook(request: Request, x_line_signature: str = Header(None)):
     body = await request.body()
     if not verify_signature(body, x_line_signature):
