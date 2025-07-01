@@ -7,11 +7,15 @@ import os
 
 app = FastAPI()
 
-# LINE Bot ¾ÌÃÒ
+from routers import webhook
+app.include_router(webhook.router)
+
+
+# LINE Bot æ†‘è­‰
 LINE_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 if not LINE_SECRET or not LINE_TOKEN:
-    raise RuntimeError("½Ğ¥ı³]©wÀô¹ÒÅÜ¼Æ LINE_CHANNEL_SECRET¡BLINE_CHANNEL_ACCESS_TOKEN")
+    raise RuntimeError("è«‹å…ˆè¨­å®šç’°å¢ƒè®Šæ•¸ LINE_CHANNEL_SECRETã€LINE_CHANNEL_ACCESS_TOKEN")
 
 line_bot_api = LineBotApi(LINE_TOKEN)
 handler = WebhookHandler(LINE_SECRET)
@@ -30,7 +34,7 @@ async def webhook(request: Request):
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text(event):
     user_text = event.message.text.strip()
-    reply = f"§A¦n¡A§Ú¬O DanielBot ??\n§A­è¤~»¡ªº¬O¡G¡u{user_text}¡v"
+    reply = f"ä½ å¥½ï¼Œæˆ‘æ˜¯ DanielBot ??\nä½ å‰›æ‰èªªçš„æ˜¯ï¼šã€Œ{user_text}ã€"
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
 
 
@@ -43,16 +47,16 @@ class AlertPayload(BaseModel):
 @app.post("/copilot-alert")
 async def copilot_alert(payload: AlertPayload):
     """
-    Copilot ©I¥s¦¹¸ô¥Ñ¡A±À¼½¨t²ÎÄµ¥Ü
-    ½d¨Ò body:
+    Copilot å‘¼å«æ­¤è·¯ç”±ï¼Œæ¨æ’­ç³»çµ±è­¦ç¤º
+    ç¯„ä¾‹ body:
     {
       "type": "billing_alert",
-      "title": "Cloud Run ¶W¥X§K¶OÃB«×",
-      "message": "?? ¥»¤ë¤w¨Ï¥Î 100% §K¶OÃB«×¡A½ĞÀË¬dªA°Èª¬ºA¡C"
+      "title": "Cloud Run è¶…å‡ºå…è²»é¡åº¦",
+      "message": "?? æœ¬æœˆå·²ä½¿ç”¨ 100% å…è²»é¡åº¦ï¼Œè«‹æª¢æŸ¥æœå‹™ç‹€æ…‹ã€‚"
     }
     """
     # TODO: broadcast or push to specific user(s)
-    # ¤U­±¥Ü½d¦L¥X¡A¤]¥i§ï¥Î line_bot_api.broadcast(...)
+    # ä¸‹é¢ç¤ºç¯„å°å‡ºï¼Œä¹Ÿå¯æ”¹ç”¨ line_bot_api.broadcast(...)
     print(f"[COPILOT ALERT] {payload.type} - {payload.title}: {payload.message}")
     return {"status": "alert received"}
 
@@ -68,17 +72,17 @@ class NLUResponse(BaseModel):
 @app.post("/copilot-nlu", response_model=NLUResponse)
 async def copilot_nlu(req: NLURequest):
     """
-    Copilot ¶Ç¤J user text¡A¦^¶Ç·N¹Ïµ²ºc¤Æµ²ªG
-    ½d¨Ò body:
+    Copilot å‚³å…¥ user textï¼Œå›å‚³æ„åœ–çµæ§‹åŒ–çµæœ
+    ç¯„ä¾‹ body:
     {
-      "text": "À°§Ú¬d¤@¤U 2330 ¤µ¤éªÑ»ù"
+      "text": "å¹«æˆ‘æŸ¥ä¸€ä¸‹ 2330 ä»Šæ—¥è‚¡åƒ¹"
     }
-    ¦^¶Ç:
+    å›å‚³:
     {
       "intent": "query_stock_price",
       "confidence": 0.98
     }
     """
-    # TODO: ±µ¤W¯u¥¿ªº NLU ¼Ò«¬
-    # ³o¸Ì¥Ü½d¦^¶Ç stub
+    # TODO: æ¥ä¸ŠçœŸæ­£çš„ NLU æ¨¡å‹
+    # é€™è£¡ç¤ºç¯„å›å‚³ stub
     return NLUResponse(intent="unknown", confidence=0.0)
