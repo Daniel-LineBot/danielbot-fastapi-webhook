@@ -3,15 +3,14 @@ import httpx
 from typing import Optional
 from datetime import datetime, timedelta
 
-router = APIRouter()  
+router = APIRouter()
 
 @router.get("/stock/{stock_id}")
-async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None)): 
+async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None)):
     if date:
         return await get_historical_data(stock_id, date)
     else:
         return await get_realtime_data(stock_id)
-
 
 async def get_realtime_data(stock_id: str):
     url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{stock_id}.tw"
@@ -25,15 +24,14 @@ async def get_realtime_data(stock_id: str):
     info = data["msgArray"][0]
     return {
         "資料來源": "即時查詢",
-        "股票名稱": info["n"],
-        "股票代號": info["c"],
-        "成交價": info["z"],
-        "漲跌": info["y"],
-        "昨收": info["y"],
-        "開盤": info["o"],
+        "股票名稱": info.get("n", ""),
+        "股票代號": info.get("c", ""),
+        "成交價": info.get("z", ""),
+        "漲跌": info.get("y", ""),
+        "昨收": info.get("y", ""),
+        "開盤": info.get("o", ""),
         "產業別": info.get("ind", "N/A")
     }
-
 
 async def get_historical_data(stock_id: str, date: str):
     try:
@@ -44,16 +42,19 @@ async def get_historical_data(stock_id: str, date: str):
     retries = 7
     for _ in range(retries):
         query_month = target_date.strftime("%Y%m")
-        query_day_str = f"{target_date.year}/{target_date.month}/{target_date.day}"
+        query_day = f"{target_date.year}/{target_date.month}/{target_date.day}"
         url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={query_month}01&stockNo={stock_id}"
 
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            data = response.json()
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, timeout=10)
+                data = response.json()
+        except Exception as e:
+            return {"error": f"取得 TWSE 資料失敗：{str(e)}"}
 
-        if "data" in data and data["data"]:
+        if "data" in data and isinstance(data["data"], list):
             for row in data["data"]:
-                if row[0].startswith(query_day_str):
+                if isinstance(row, list) and row and str(row[0]).startswith(query_day):
                     return {
                         "資料來源": "歷史盤後",
                         "股票代號": stock_id,
@@ -65,10 +66,9 @@ async def get_historical_data(stock_id: str, date: str):
                         "成交量(張)": row[1],
                     }
 
+        # 往前一天繼續查
         target_date -= timedelta(days=1)
 
     return {
-        "error": f"{date} 起往前 7 日內查無任何交易紀錄，可能為連續假日或 TWSE 尚未釋出資料"
+        "error": f"{date} 起往前 7 日內查無任何交易紀錄（可能為連假或 TWSE 尚未釋出該月資料）"
     }
-
-
