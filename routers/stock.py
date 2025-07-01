@@ -2,6 +2,7 @@ from fastapi import APIRouter, Query
 import httpx
 from typing import Optional
 from datetime import datetime, timedelta
+from fastapi.logger import logger  # 用於印出 debug log 到 Cloud Run logs
 
 router = APIRouter()
 
@@ -51,29 +52,36 @@ async def get_historical_data(stock_id: str, date: str):
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, timeout=10)
                 content_type = response.headers.get("content-type", "")
+                raw = response.text
+
                 if "json" not in content_type:
-                    return {
-                        "error": f"{date} 查詢失敗：TWSE 尚未釋出該月份資料"
-                    }
+                    logger.warning(f"[TWSE] {query_month} 回傳非 JSON，內容如下：{raw[:80]}...")
+                    return {"error": f"{date} 查詢失敗：TWSE 尚未釋出該月份資料"}
+
                 data = response.json()
         except Exception as e:
             return {"error": f"取得 TWSE 資料失敗：{str(e)}"}
 
-        if "data" in data and isinstance(data["data"], list):
-            for row in data["data"]:
-                if isinstance(row, list) and row and str(row[0]).startswith(query_day):
-                    return {
-                        "資料來源": "歷史盤後",
-                        "股票代號": stock_id,
-                        "查詢日期": target_date.strftime("%Y%m%d"),
-                        "開盤": row[3],
-                        "最高": row[4],
-                        "最低": row[5],
-                        "收盤": row[6],
-                        "成交量(張)": row[1],
-                    }
+        # 印出該月份所有有資料的日期（助於 debug）
+        available_dates = [
+            row[0] for row in data.get("data", [])
+            if isinstance(row, list) and row
+        ]
+        logger.info(f"[TWSE] {query_month} 可用日期：{available_dates}")
 
-        # 查不到就往前推一天
+        for row in data.get("data", []):
+            if isinstance(row, list) and row and str(row[0]).startswith(query_day):
+                return {
+                    "資料來源": "歷史盤後",
+                    "股票代號": stock_id,
+                    "查詢日期": target_date.strftime("%Y%m%d"),
+                    "開盤": row[3],
+                    "最高": row[4],
+                    "最低": row[5],
+                    "收盤": row[6],
+                    "成交量(張)": row[1],
+                }
+
         target_date -= timedelta(days=1)
 
     return {
