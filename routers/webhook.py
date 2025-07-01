@@ -25,7 +25,7 @@ async def webhook(request: Request):
 
     return "OK"
 
-
+@router.post("/line_webhook")
 async def line_webhook(request: Request, x_line_signature: str = Header(None)):
     body = await request.body()
     if not verify_signature(body, x_line_signature):
