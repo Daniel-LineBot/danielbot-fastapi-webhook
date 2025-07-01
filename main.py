@@ -5,9 +5,8 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 
-app = FastAPI()
-
 from routers import webhook
+app = FastAPI()
 app.include_router(webhook.router)
 
 print("👋 FastAPI app 正在啟動中…")
