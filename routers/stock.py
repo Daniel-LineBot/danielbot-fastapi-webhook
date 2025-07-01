@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query
 import httpx
 from typing import Optional
 from datetime import datetime, timedelta
-from fastapi.logger import logger  # 用於印出 debug log 到 Cloud Run logs
+from fastapi.logger import logger  # 用於印 log 到 Cloud Run
 
 router = APIRouter()
 
@@ -62,12 +62,11 @@ async def get_historical_data(stock_id: str, date: str):
         except Exception as e:
             return {"error": f"取得 TWSE 資料失敗：{str(e)}"}
 
-        # 印出該月份所有有資料的日期（助於 debug）
         available_dates = [
             row[0] for row in data.get("data", [])
             if isinstance(row, list) and row
         ]
-        logger.info(f"[TWSE] {query_month} 可用日期：{available_dates}")
+        logger.info(f"[TWSE] {query_month} 可用資料日：{available_dates}")
 
         for row in data.get("data", []):
             if isinstance(row, list) and row and str(row[0]).startswith(query_day):
