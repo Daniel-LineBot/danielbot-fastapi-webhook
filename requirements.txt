@@ -3,4 +3,6 @@ uvicorn
 line-bot-sdk
 pydantic
 python-dotenv
+uvicorn[standard]
+
 
