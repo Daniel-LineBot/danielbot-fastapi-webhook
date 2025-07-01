@@ -7,6 +7,8 @@ import os
 
 from routers import webhook
 app = FastAPI()
+print("✅ FastAPI 應用啟動，正在監聽 0.0.0.0:8080")
+
 app.include_router(webhook.router)
 
 print("👋 FastAPI app 正在啟動中…")
