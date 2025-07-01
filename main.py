@@ -22,8 +22,7 @@ line_bot_api = LineBotApi(LINE_TOKEN)
 handler = WebhookHandler(LINE_SECRET)
 
 # --- 1) LINE Webhook endpoint ---
-#@app.post("/webhook")
-#async def webhook(request: Request):
+
     signature = request.headers.get("x-line-signature", "")
     body = (await request.body()).decode("utf-8")
     try:
