@@ -88,3 +88,5 @@ async def copilot_nlu(req: NLURequest):
     return NLUResponse(intent="unknown", confidence=0.0)
     
 print("✅ DanielBot webhook app 啟動中… FastAPI 已掛上 /webhook")
+print("📚 所有已掛載的路由：", app.routes)
+
