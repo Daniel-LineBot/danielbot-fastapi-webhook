@@ -3,7 +3,7 @@ import httpx
 from typing import Optional
 from datetime import datetime, timedelta
 
-router = APIRouter()
+router = APIRouter()  
 
 @router.get("/stock/{stock_id}")
 async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None)): 
