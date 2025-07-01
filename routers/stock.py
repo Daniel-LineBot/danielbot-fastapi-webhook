@@ -2,9 +2,10 @@ from fastapi import APIRouter, Query
 import httpx
 from typing import Optional
 from datetime import datetime, timedelta
-from fastapi.logger import logger  # 用於印 log 到 Cloud Run
+from fastapi.logger import logger
 
 router = APIRouter()
+
 
 @router.get("/stock/{stock_id}")
 async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None)):
@@ -38,11 +39,15 @@ async def get_realtime_data(stock_id: str):
 
 async def get_historical_data(stock_id: str, date: str):
     try:
-        target_date = datetime.strptime(date, "%Y%m%d")
+        original_query_date = datetime.strptime(date, "%Y%m%d")
     except ValueError:
         return {"error": "請使用 YYYYMMDD 格式輸入日期（例如 20250701）"}
 
+    target_date = original_query_date
     retries = 7
+    fallback_used = False
+    actual_data_date = None
+
     for _ in range(retries):
         query_month = target_date.strftime("%Y%m")
         query_day = f"{target_date.year}/{target_date.month}/{target_date.day}"
@@ -52,12 +57,10 @@ async def get_historical_data(stock_id: str, date: str):
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, timeout=10)
                 content_type = response.headers.get("content-type", "")
-                raw = response.text
-
                 if "json" not in content_type:
-                    logger.warning(f"[TWSE] {query_month} 回傳非 JSON，內容如下：{raw[:80]}...")
-                    return {"error": f"{date} 查詢失敗：TWSE 尚未釋出該月份資料"}
-
+                    return {
+                        "error": f"{date} 查詢失敗：TWSE 尚未釋出 {query_month} 月份資料"
+                    }
                 data = response.json()
         except Exception as e:
             return {"error": f"取得 TWSE 資料失敗：{str(e)}"}
@@ -70,17 +73,23 @@ async def get_historical_data(stock_id: str, date: str):
 
         for row in data.get("data", []):
             if isinstance(row, list) and row and str(row[0]).startswith(query_day):
-                return {
+                actual_data_date = target_date.strftime("%Y%m%d")
+                result = {
                     "資料來源": "歷史盤後",
                     "股票代號": stock_id,
-                    "查詢日期": target_date.strftime("%Y%m%d"),
+                    "原始查詢日期": original_query_date.strftime("%Y%m%d"),
+                    "實際回傳日期": actual_data_date,
                     "開盤": row[3],
                     "最高": row[4],
                     "最低": row[5],
                     "收盤": row[6],
                     "成交量(張)": row[1],
                 }
+                if fallback_used:
+                    result["提示"] = f"您查詢的 {original_query_date.strftime('%Y/%m/%d')} 無資料，已自動回覆 {target_date.strftime('%Y/%m/%d')} 的報價"
+                return result
 
+        fallback_used = True
         target_date -= timedelta(days=1)
 
     return {
