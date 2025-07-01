@@ -12,6 +12,7 @@ async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None
     else:
         return await get_realtime_data(stock_id)
 
+
 async def get_realtime_data(stock_id: str):
     url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{stock_id}.tw"
     async with httpx.AsyncClient() as client:
@@ -33,6 +34,7 @@ async def get_realtime_data(stock_id: str):
         "產業別": info.get("ind", "N/A")
     }
 
+
 async def get_historical_data(stock_id: str, date: str):
     try:
         target_date = datetime.strptime(date, "%Y%m%d")
@@ -48,6 +50,11 @@ async def get_historical_data(stock_id: str, date: str):
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, timeout=10)
+                content_type = response.headers.get("content-type", "")
+                if "json" not in content_type:
+                    return {
+                        "error": f"{date} 查詢失敗：TWSE 尚未釋出該月份資料"
+                    }
                 data = response.json()
         except Exception as e:
             return {"error": f"取得 TWSE 資料失敗：{str(e)}"}
@@ -66,7 +73,7 @@ async def get_historical_data(stock_id: str, date: str):
                         "成交量(張)": row[1],
                     }
 
-        # 往前一天繼續查
+        # 查不到就往前推一天
         target_date -= timedelta(days=1)
 
     return {
