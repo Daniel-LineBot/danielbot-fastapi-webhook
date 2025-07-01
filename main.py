@@ -10,6 +10,8 @@ app = FastAPI()
 from routers import webhook
 app.include_router(webhook.router)
 
+print("👋 FastAPI app 正在啟動中…")
+
 
 # LINE Bot 憑證
 LINE_SECRET = os.getenv("LINE_CHANNEL_SECRET")
@@ -86,3 +88,5 @@ async def copilot_nlu(req: NLURequest):
     # TODO: 接上真正的 NLU 模型
     # 這裡示範回傳 stub
     return NLUResponse(intent="unknown", confidence=0.0)
+    
+print("✅ DanielBot webhook app 啟動中… FastAPI 已掛上 /webhook")
