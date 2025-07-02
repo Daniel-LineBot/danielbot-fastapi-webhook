@@ -4,6 +4,8 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 import asyncio
+import re
+from datetime import datetime
 
 from routers.stock import get_stock_info
 from routers.dividend import get_dividend_info  # ✅ 同步版
@@ -37,15 +39,26 @@ def handle_text_message(event: MessageEvent):
 
 async def process_event(event: MessageEvent):
     user_text = event.message.text.strip()
+    reply_text = ""
 
     if user_text.startswith("查詢"):
         parts = user_text.replace("查詢", "").strip().split()
         stock_id = parts[0] if len(parts) >= 1 else None
         date = parts[1] if len(parts) >= 2 else None
 
-        if not stock_id:
-            reply_text = "請輸入股票代號，例如：查詢 2330 或 查詢 2330 20250628"
-        else:
+        # 股票代號格式驗證
+        if not stock_id or not re.fullmatch(r"\d{4}", stock_id):
+            reply_text = "❗️請輸入正確的四位數股票代號，例如：查詢 2330 或 查詢 2330 20250701"
+        elif date:
+            # 日期格式驗證
+            if not re.fullmatch(r"\d{8}", date):
+                reply_text = f"❗️日期格式錯誤，請使用 YYYYMMDD，例如：20250701"
+            else:
+                try:
+                    datetime.strptime(date, "%Y%m%d")
+                except ValueError:
+                    reply_text = f"❗️查無效日期：{date}"
+        if not reply_text:
             try:
                 info = await get_stock_info(stock_id, date)
             except Exception as e:
@@ -53,7 +66,7 @@ async def process_event(event: MessageEvent):
 
             if "error" in info:
                 reply_text = f"⚠️ {info['error']}"
-            elif info["資料來源"] == "即時查詢":
+            elif info.get("資料來源") == "即時查詢":
                 reply_text = (
                     f"📈 {info['股票名稱']}（{info['股票代號']}）\n"
                     f"成交價：{info['成交價']} 元\n"
@@ -76,7 +89,7 @@ async def process_event(event: MessageEvent):
             reply_text = "請輸入股票代號，例如：查配息 2330"
         else:
             try:
-                info = get_dividend_info(stock_id)  # ✅ 改為同步，不加 await
+                info = get_dividend_info(stock_id)
             except Exception as e:
                 info = {"error": f"查詢配息時發生例外：{str(e)}"}
 
@@ -94,10 +107,17 @@ async def process_event(event: MessageEvent):
                 )
 
     else:
-        reply_text = f"你剛說的是：{user_text}（若要查股價請輸入「查詢 2330」，或查配息請輸入「查配息 2330」）"
+        reply_text = (
+            f"你剛說的是：{user_text}\n\n"
+            "💡 指令參考：\n"
+            "➤ 查詢 2330\n"
+            "➤ 查詢 2330 20250701\n"
+            "➤ 查配息 2330"
+        )
 
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply_text)
     )
+
 
