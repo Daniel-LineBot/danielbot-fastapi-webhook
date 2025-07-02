@@ -15,10 +15,16 @@ async def get_dividend_info(stock_id: str):
         # ❌ 移除這行（避免觸發 pyppeteer）
         # await r.html.arender(timeout=20, sleep=1)
         soup = BeautifulSoup(r.html.html, "html.parser")
+        # ✅ 在這裡插入 debug 行
+        print(r.html.html[:500])
     except Exception as e:
         return {"error": f"無法連線到 Goodinfo：{str(e)}"}
 
-    table = soup.select_one("table.b1.p4_2.r10.box_shadow")
+    table = (
+    soup.select_one("table.b1.p4_2.r10.box_shadow")
+    or soup.select_one("table.b1.p4_2.r10")  # fallback selector
+)
+
     if not table:
         return {"error": f"查無 {stock_id} 的股利資訊"}
 
