@@ -14,7 +14,6 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-
 @router.post("/webhook")
 async def webhook(request: Request):
     body = await request.body()
@@ -27,9 +26,8 @@ async def webhook(request: Request):
 
     return "OK"
 
-
 @handler.add(MessageEvent, message=TextMessage)
-def handle_text_message(event):
+async def handle_text_message(event: MessageEvent):  # 改為 async
     user_text = event.message.text.strip()
 
     if user_text.startswith("查詢"):
@@ -40,8 +38,7 @@ def handle_text_message(event):
         if not stock_id:
             reply_text = "請輸入股票代號，例如：查詢 2330 或 查詢 2330 20250628"
         else:
-            import asyncio
-            info = asyncio.run(get_stock_info(stock_id, date))
+            info = await get_stock_info(stock_id, date)
 
             if "error" in info:
                 reply_text = f"⚠️ {info['error']}"
@@ -68,5 +65,4 @@ def handle_text_message(event):
         event.reply_token,
         TextSendMessage(text=reply_text)
     )
-
 
