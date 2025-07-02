@@ -6,7 +6,7 @@ import os
 import asyncio
 
 from routers.stock import get_stock_info
-from routers.dividend import get_dividend_info  # <--- 新增：查配息模組
+from routers.dividend import get_dividend_info  # ✅ 同步版
 
 router = APIRouter()
 
@@ -32,7 +32,7 @@ async def webhook(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
-    asyncio.create_task(process_event(event))  # background task 處理 async 邏輯
+    asyncio.create_task(process_event(event))  # background task 執行 async
 
 
 async def process_event(event: MessageEvent):
@@ -76,7 +76,7 @@ async def process_event(event: MessageEvent):
             reply_text = "請輸入股票代號，例如：查配息 2330"
         else:
             try:
-                info = await get_dividend_info(stock_id)
+                info = get_dividend_info(stock_id)  # ✅ 改為同步，不加 await
             except Exception as e:
                 info = {"error": f"查詢配息時發生例外：{str(e)}"}
 
@@ -100,3 +100,4 @@ async def process_event(event: MessageEvent):
         event.reply_token,
         TextSendMessage(text=reply_text)
     )
+
