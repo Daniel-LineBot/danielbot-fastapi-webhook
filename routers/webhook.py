@@ -5,7 +5,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 import asyncio
 
-from routers.stock import get_stock_info  # 你已寫好的查股模組
+from routers.stock import get_stock_info
 
 router = APIRouter()
 
@@ -42,13 +42,15 @@ def handle_text_message(event):
             reply_text = "請輸入股票代號，例如：查詢 2330 或 查詢 2330 20250628"
         else:
             try:
-                # 這段會在同步環境中獲得事件迴圈安全執行
                 loop = asyncio.get_event_loop()
-                info = loop.create_task(get_stock_info(stock_id, date))
-                loop.run_until_complete(info)
-                info = info.result()
+                if loop.is_running():
+                    task = asyncio.ensure_future(get_stock_info(stock_id, date))
+                    loop.run_until_complete(task)
+                    info = task.result()
+                else:
+                    info = loop.run_until_complete(get_stock_info(stock_id, date))
             except Exception as e:
-                info = {"error": str(e)}
+                info = {"error": f"查詢時發生例外：{str(e)}"}
 
             if "error" in info:
                 reply_text = f"⚠️ {info['error']}"
@@ -75,3 +77,5 @@ def handle_text_message(event):
         event.reply_token,
         TextSendMessage(text=reply_text)
     )
+
+   
