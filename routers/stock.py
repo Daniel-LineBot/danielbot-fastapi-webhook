@@ -17,9 +17,22 @@ async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None
 
 async def get_realtime_data(stock_id: str):
     url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{stock_id}.tw"
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://www.twse.com.tw/"
+    }
+
     async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        data = response.json()
+        try:
+            response = await client.get(url, headers=headers, timeout=10)
+            if "json" not in response.headers.get("content-type", "").lower():
+                logger.error(f"[TWSE 即時] 非 JSON 回應：{response.text[:300]}")
+                return {"error": "TWSE 即時查詢回傳非預期格式，請稍後再試或確認服務是否中斷"}
+
+            data = response.json()
+        except Exception as e:
+            logger.exception(f"[TWSE 即時] 資料解析失敗：{str(e)}")
+            return {"error": "TWSE 即時查詢發生錯誤，請稍後再試"}
 
     if not data.get("msgArray"):
         return {"error": "找不到股票代號，請確認輸入正確"}
@@ -52,17 +65,22 @@ async def get_historical_data(stock_id: str, date: str):
         query_month = target_date.strftime("%Y%m")
         query_day = f"{target_date.year}/{target_date.month}/{target_date.day}"
         url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={query_month}01&stockNo={stock_id}"
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://www.twse.com.tw/"
+        }
 
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(url, timeout=10)
+                response = await client.get(url, headers=headers, timeout=10)
                 content_type = response.headers.get("content-type", "")
-                if "json" not in content_type:
-                    return {
-                        "error": f"{date} 查詢失敗：TWSE 尚未釋出 {query_month} 月份資料"
-                    }
+                if "json" not in content_type.lower():
+                    logger.warning(f"[TWSE 歷史] 回傳非 JSON：{response.text[:300]}")
+                    return {"error": f"{date} 查詢失敗：TWSE 尚未釋出 {query_month} 月份資料"}
+
                 data = response.json()
         except Exception as e:
+            logger.exception(f"[TWSE 歷史] 資料取得失敗：{str(e)}")
             return {"error": f"取得 TWSE 資料失敗：{str(e)}"}
 
         available_dates = [
@@ -86,7 +104,10 @@ async def get_historical_data(stock_id: str, date: str):
                     "成交量(張)": row[1],
                 }
                 if fallback_used:
-                    result["提示"] = f"您查詢的 {original_query_date.strftime('%Y/%m/%d')} 無資料，已自動回覆 {target_date.strftime('%Y/%m/%d')} 的報價"
+                    result["提示"] = (
+                        f"您查詢的 {original_query_date.strftime('%Y/%m/%d')} 無資料，"
+                        f"已自動回覆 {target_date.strftime('%Y/%m/%d')} 的報價"
+                    )
                 return result
 
         fallback_used = True
