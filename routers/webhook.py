@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Request
-from linebot import LineBotApi, WebhookHandler
+from linebot import LineBotApi
+from linebot.aiohttp_async_http_client import AiohttpAsyncHttpClient
+from linebot.v3.webhook.async_dispatcher import AsyncWebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
@@ -12,7 +14,7 @@ LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
-handler = WebhookHandler(LINE_CHANNEL_SECRET)
+handler = AsyncWebhookHandler(LINE_CHANNEL_SECRET)
 
 @router.post("/webhook")
 async def webhook(request: Request):
