@@ -1,9 +1,11 @@
 fastapi
 uvicorn
 line-bot-sdk
+requests-html
 pydantic
 python-dotenv
 uvicorn[standard]
 httpx
+
 
 
