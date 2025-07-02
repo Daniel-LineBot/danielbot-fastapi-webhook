@@ -1,25 +1,20 @@
-from requests_html import AsyncHTMLSession
+import requests
 from bs4 import BeautifulSoup
 import datetime
 
-async def get_dividend_info(stock_id: str):
+def get_dividend_info(stock_id: str):
     url = f"https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID={stock_id}"
     headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "user-agent": "Mozilla/5.0",
         "referer": "https://goodinfo.tw/"
     }
 
-    session = AsyncHTMLSession()
     try:
-        r = await session.get(url, headers=headers)
-        soup = BeautifulSoup(r.html.html, "html.parser")
+        r = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(r.text, "html.parser")
     except Exception as e:
-        await session.close()
         return {"error": f"無法連線到 Goodinfo：{str(e)}"}
 
-    await session.close()
-
-    # 嘗試抓配息表格 ➜ selector fallback
     table = (
         soup.select_one("table.b1.p4_2.r10.box_shadow")
         or soup.select_one("table.b1.p4_2.r10")
