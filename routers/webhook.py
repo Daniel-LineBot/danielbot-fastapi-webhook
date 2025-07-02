@@ -5,7 +5,8 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 import asyncio
 
-from routers.stock import get_stock_info  # 你原本的 async 查股模組
+from routers.stock import get_stock_info
+from routers.dividend import get_dividend_info  # <--- 新增：查配息模組
 
 router = APIRouter()
 
@@ -31,7 +32,7 @@ async def webhook(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
-    asyncio.create_task(process_event(event))  # 用 background task 執行 async 邏輯
+    asyncio.create_task(process_event(event))  # background task 處理 async 邏輯
 
 
 async def process_event(event: MessageEvent):
@@ -68,10 +69,33 @@ async def process_event(event: MessageEvent):
                 )
                 if "提示" in info:
                     reply_text += f"\n🛈 {info['提示']}"
-    else:
-        reply_text = f"你剛說的是：{user_text}（若要查股價請輸入「查詢 2330」）"
 
-    # 發送回應
+    elif user_text.startswith("查配息"):
+        stock_id = user_text.replace("查配息", "").strip()
+        if not stock_id:
+            reply_text = "請輸入股票代號，例如：查配息 2330"
+        else:
+            try:
+                info = await get_dividend_info(stock_id)
+            except Exception as e:
+                info = {"error": f"查詢配息時發生例外：{str(e)}"}
+
+            if "error" in info:
+                reply_text = f"⚠️ {info['error']}"
+            else:
+                reply_text = (
+                    f"📅 {info['配息年度']} 年 {stock_id} 配息資訊\n"
+                    f"除權息日：{info['除權息日']}\n"
+                    f"現金股利：{info['現金股利']} 元\n"
+                    f"股票股利：{info['股票股利']} 股\n"
+                    f"預計發放：{info['發放日']}\n"
+                    f"來源：{info['來源']}\n"
+                    f"🛈 {info['提示']}"
+                )
+
+    else:
+        reply_text = f"你剛說的是：{user_text}（若要查股價請輸入「查詢 2330」，或查配息請輸入「查配息 2330」）"
+
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply_text)
