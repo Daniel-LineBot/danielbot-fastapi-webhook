@@ -5,31 +5,30 @@ import datetime
 async def get_dividend_info(stock_id: str):
     url = f"https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID={stock_id}"
     headers = {
-        "user-agent": "Mozilla/5.0",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         "referer": "https://goodinfo.tw/"
     }
 
     session = AsyncHTMLSession()
     try:
         r = await session.get(url, headers=headers)
-        # ❌ 移除這行（避免觸發 pyppeteer）
-        # await r.html.arender(timeout=20, sleep=1)
         soup = BeautifulSoup(r.html.html, "html.parser")
-        # ✅ 在這裡插入 debug 行
-        print(r.html.html[:500])
     except Exception as e:
+        await session.close()
         return {"error": f"無法連線到 Goodinfo：{str(e)}"}
 
+    await session.close()
+
+    # 嘗試抓配息表格 ➜ selector fallback
     table = (
-    soup.select_one("table.b1.p4_2.r10.box_shadow")
-    or soup.select_one("table.b1.p4_2.r10")  # fallback selector
-)
+        soup.select_one("table.b1.p4_2.r10.box_shadow")
+        or soup.select_one("table.b1.p4_2.r10")
+    )
 
     if not table:
-        return {"error": f"查無 {stock_id} 的股利資訊"}
+        return {"error": f"查無 {stock_id} 的配息表格，可能網站結構已變"}
 
     rows = table.select("tr")
-    header_row = rows[0]
     data_rows = rows[1:]
 
     latest_row = None
@@ -47,7 +46,7 @@ async def get_dividend_info(stock_id: str):
     elif latest_row:
         note = "查詢成功"
     else:
-        return {"error": "找不到有效的配息資料"}
+        return {"error": "找不到任何可用的配息資料"}
 
     return {
         "股票代號": stock_id,
@@ -60,3 +59,6 @@ async def get_dividend_info(stock_id: str):
         "公告來源": "Goodinfo",
         "提示": note
     }
+
+
+    
