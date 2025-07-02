@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import datetime
 
 def get_dividend_info(stock_id: str):
-    url = f"https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID={stock_id}"
+    url = f"https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID={stock_id}&STEP=DATA"
     headers = {
         "user-agent": "Mozilla/5.0",
         "referer": "https://goodinfo.tw/"
