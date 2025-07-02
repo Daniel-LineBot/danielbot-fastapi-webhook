@@ -1,42 +1,78 @@
-from fastapi import APIRouter, Request, Header, HTTPException
-from linebot.v3.webhook import WebhookHandler
-from linebot.v3.messaging import MessagingApiClient, TextMessage
-from linebot.v3.webhooks import MessageEvent
-from linebot.v3.exceptions import InvalidSignatureError
+from fastapi import APIRouter, Request
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
+import os
 import asyncio
 
-from app.dependencies import get_line_handler, get_line_client
-from app.utils import get_stock_info  # 這必須是 async def
+from routers.stock import get_stock_info  # 你原本的 async 查股模組
 
 router = APIRouter()
 
-# 初始化 LINE SDK handler/client
-handler: WebhookHandler = get_line_handler()
-client: MessagingApiClient = get_line_client()
+LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
+LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
-# webhook entrypoint
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(LINE_CHANNEL_SECRET)
+
+
 @router.post("/webhook")
-async def webhook(request: Request, x_line_signature: str = Header(...)):
+async def webhook(request: Request):
     body = await request.body()
+    signature = request.headers.get("x-line-signature")
+
     try:
-        handler.handle(body.decode("utf-8"), x_line_signature)
+        handler.handle(body.decode("utf-8"), signature)
     except InvalidSignatureError:
-        raise HTTPException(status_code=400, detail="Invalid signature")
+        return "Invalid signature", 400
+
     return "OK"
 
-# SYNC wrapper handler ➜ 建立 async background task
-@handler.add(MessageEvent, message=TextMessage)
-def handle_text_event(event: MessageEvent):
-    asyncio.create_task(process_text_message(event))
 
-# 真正處理邏輯的 async 函式
-async def process_text_message(event: MessageEvent):
-    user_input = event.message.text.strip()
-    if user_input.startswith("查股價"):
-        stock_id = user_input[3:].strip()  # 例如「查股價2330」
-        try:
-            result = await get_stock_info(stock_id)
-            message = TextMessage(text=f"{stock_id} 現價：{result['price']} 元")
-        except Exception as e:
-            message = TextMessage(text=f"查詢失敗：{str(e)}")
-        await client.reply_message(reply_token=event.reply_token, messages=[message])
+@handler.add(MessageEvent, message=TextMessage)
+def handle_text_message(event: MessageEvent):
+    asyncio.create_task(process_event(event))  # 用 background task 執行 async 邏輯
+
+
+async def process_event(event: MessageEvent):
+    user_text = event.message.text.strip()
+
+    if user_text.startswith("查詢"):
+        parts = user_text.replace("查詢", "").strip().split()
+        stock_id = parts[0] if len(parts) >= 1 else None
+        date = parts[1] if len(parts) >= 2 else None
+
+        if not stock_id:
+            reply_text = "請輸入股票代號，例如：查詢 2330 或 查詢 2330 20250628"
+        else:
+            try:
+                info = await get_stock_info(stock_id, date)
+            except Exception as e:
+                info = {"error": f"查詢時發生例外：{str(e)}"}
+
+            if "error" in info:
+                reply_text = f"⚠️ {info['error']}"
+            elif info["資料來源"] == "即時查詢":
+                reply_text = (
+                    f"📈 {info['股票名稱']}（{info['股票代號']}）\n"
+                    f"成交價：{info['成交價']} 元\n"
+                    f"開盤：{info['開盤']} 元\n"
+                    f"產業別：{info['產業別']}"
+                )
+            else:
+                reply_text = (
+                    f"📊 股票代號：{info['股票代號']}\n"
+                    f"查詢日：{info['原始查詢日期']} ➜ 回應日：{info['實際回傳日期']}\n"
+                    f"開：{info['開盤']} 高：{info['最高']} 低：{info['最低']} 收：{info['收盤']}\n"
+                    f"成交量：{info['成交量(張)']} 張"
+                )
+                if "提示" in info:
+                    reply_text += f"\n🛈 {info['提示']}"
+    else:
+        reply_text = f"你剛說的是：{user_text}（若要查股價請輸入「查詢 2330」）"
+
+    # 發送回應
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=reply_text)
+    )
