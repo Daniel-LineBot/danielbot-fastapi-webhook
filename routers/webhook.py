@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Request
-from linebot import LineBotApi
-from linebot.aiohttp_async_http_client import AiohttpAsyncHttpClient
-from linebot.v3.webhook.async_dispatcher import AsyncWebhookHandler
+from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
@@ -14,7 +12,8 @@ LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
-handler = AsyncWebhookHandler(LINE_CHANNEL_SECRET)
+handler = WebhookHandler(LINE_CHANNEL_SECRET)
+
 
 @router.post("/webhook")
 async def webhook(request: Request):
@@ -28,8 +27,9 @@ async def webhook(request: Request):
 
     return "OK"
 
+
 @handler.add(MessageEvent, message=TextMessage)
-async def handle_text_message(event: MessageEvent):  # 改為 async
+def handle_text_message(event: MessageEvent):
     user_text = event.message.text.strip()
 
     if user_text.startswith("查詢"):
@@ -40,7 +40,12 @@ async def handle_text_message(event: MessageEvent):  # 改為 async
         if not stock_id:
             reply_text = "請輸入股票代號，例如：查詢 2330 或 查詢 2330 20250628"
         else:
-            info = await get_stock_info(stock_id, date)
+            import asyncio
+            try:
+                info = asyncio.run(get_stock_info(stock_id, date))
+            except RuntimeError:
+                loop = asyncio.get_event_loop()
+                info = loop.run_until_complete(get_stock_info(stock_id, date))
 
             if "error" in info:
                 reply_text = f"⚠️ {info['error']}"
