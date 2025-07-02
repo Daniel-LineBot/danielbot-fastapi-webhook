@@ -1,0 +1,55 @@
+from requests_html import AsyncHTMLSession
+from bs4 import BeautifulSoup
+import datetime
+
+async def get_dividend_info(stock_id: str):
+    url = f"https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID={stock_id}"
+    headers = {
+        "user-agent": "Mozilla/5.0",
+        "referer": "https://goodinfo.tw/"
+    }
+
+    session = AsyncHTMLSession()
+    try:
+        r = await session.get(url, headers=headers)
+        await r.html.arender(timeout=20, sleep=1)
+    except Exception as e:
+        return {"error": f"無法連線到 Goodinfo：{str(e)}"}
+
+    soup = BeautifulSoup(r.html.html, "html.parser")
+    table = soup.select_one("table.b1.p4_2.r10.box_shadow")
+
+    if not table:
+        return {"error": f"查無 {stock_id} 的股利資訊"}
+
+    rows = table.select("tr")
+    header_row = rows[0]
+    data_rows = rows[1:]
+
+    latest_row = None
+    this_year = str(datetime.datetime.now().year)
+
+    for row in data_rows:
+        cols = [td.get_text(strip=True) for td in row.select("td")]
+        if len(cols) >= 10 and cols[0].startswith(this_year):
+            latest_row = cols
+            break
+
+    if not latest_row:
+        latest_row = [td.get_text(strip=True) for td in data_rows[0].select("td")]
+        note = "查無今年資料，回傳最近一筆紀錄"
+    else:
+        note = "查詢成功"
+
+    # 解析欄位
+    return {
+        "股票代號": stock_id,
+        "配息年度": latest_row[0],
+        "除權息日": latest_row[3],
+        "現金股利": latest_row[4],
+        "股票股利": latest_row[5],
+        "發放日": latest_row[6],
+        "來源": latest_row[8],
+        "公告來源": "Goodinfo",
+        "提示": note
+    }
