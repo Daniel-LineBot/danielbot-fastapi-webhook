@@ -6,7 +6,7 @@ import os
 
 from routers.stock import get_stock_info  # 匯入你的查詢模組
 
-router = APIRouter() 
+router = APIRouter()
 
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
@@ -65,4 +65,3 @@ async def handle_text_message(event: MessageEvent):  # 改為 async
         event.reply_token,
         TextSendMessage(text=reply_text)
     )
-
