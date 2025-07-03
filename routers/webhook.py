@@ -6,6 +6,7 @@ import os
 import re
 from datetime import datetime
 import logging
+import asyncio
 
 from routers.stock import get_stock_info
 from routers.dividend import get_dividend_info
@@ -38,9 +39,7 @@ async def webhook(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
-    # 改為直接 await，確保 Cloud Run 會執行 handler 完整邏輯
-    import asyncio
-    asyncio.run(process_event(event))
+    asyncio.create_task(process_event(event))  # ✅ 正確 async 呼叫方式
 
 
 async def process_event(event: MessageEvent):
