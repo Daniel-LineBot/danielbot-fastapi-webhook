@@ -1,10 +1,7 @@
 from fastapi import APIRouter, Request
-from linebot.v3.webhook import AsyncWebhookHandler
-from linebot.v3.messaging import AsyncLineBotApi
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from linebot.v3.messaging.models import TextMessage
+from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.aiohttp_async_http_client import AioHttpAsyncHttpClient
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 import re
 from datetime import datetime
@@ -18,11 +15,8 @@ router = APIRouter()
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
-line_bot_api = AsyncLineBotApi(
-    channel_access_token=LINE_CHANNEL_ACCESS_TOKEN,
-    http_client=AioHttpAsyncHttpClient()
-)
-handler = AsyncWebhookHandler(LINE_CHANNEL_SECRET)
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
@@ -34,7 +28,7 @@ async def webhook(request: Request):
     signature = request.headers.get("x-line-signature")
 
     try:
-        await handler.handle(body.decode("utf-8"), signature)
+        handler.handle(body.decode("utf-8"), signature)
     except InvalidSignatureError:
         logger.warning("❌ LINE Webhook Signature 驗證失敗")
         return "Invalid signature", 400
@@ -42,8 +36,14 @@ async def webhook(request: Request):
     return "OK"
 
 
-@handler.add(MessageEvent, message=TextMessageContent)
-async def handle_text_message(event: MessageEvent):
+@handler.add(MessageEvent, message=TextMessage)
+def handle_text_message(event: MessageEvent):
+    # 改為直接 await，確保 Cloud Run 會執行 handler 完整邏輯
+    import asyncio
+    asyncio.run(process_event(event))
+
+
+async def process_event(event: MessageEvent):
     user_text = event.message.text.strip()
     reply_text = ""
 
@@ -79,13 +79,17 @@ async def handle_text_message(event: MessageEvent):
                     f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
                     f"成交價：{info.get('成交價', '-')} 元\n"
                     f"開盤：{info.get('開盤', '-')} 元\n"
-                    f"產業別：{info.get('產業別', '-')}")
+                    f"產業別：{info.get('產業別', '-')}"
+                )
             else:
                 reply_text = (
                     f"📊 股票代號：{info.get('股票代號', '')}\n"
-                    f"查詢日：{info.get('原始查詢日期', '-')} ➜ 回應日：{info.get('實際回傳日期', '-')}\n"
-                    f"開：{info.get('開盤', '-')} 高：{info.get('最高', '-')} 低：{info.get('最低', '-')} 收：{info.get('收盤', '-')}\n"
-                    f"成交量：{info.get('成交量(張)', '-')} 張")
+                    f"查詢日：{info.get('原始查詢日期', '-')}"
+                    f" ➜ 回應日：{info.get('實際回傳日期', '-')}\n"
+                    f"開：{info.get('開盤', '-')} 高：{info.get('最高', '-')}"
+                    f" 低：{info.get('最低', '-')} 收：{info.get('收盤', '-')}\n"
+                    f"成交量：{info.get('成交量(張)', '-')} 張"
+                )
                 if "提示" in info:
                     reply_text += f"\n🛈 {info['提示']}"
 
@@ -114,7 +118,8 @@ async def handle_text_message(event: MessageEvent):
                     f"股票股利：{info.get('股票股利', '-')} 股\n"
                     f"預計發放：{info.get('發放日', '-')} 📮\n"
                     f"來源：{info.get('來源', '-')}\n"
-                    f"🛈 {info.get('提示', '-')}")
+                    f"🛈 {info.get('提示', '-')}"
+                )
 
     else:
         reply_text = (
@@ -122,9 +127,7 @@ async def handle_text_message(event: MessageEvent):
             "💡 指令範例：\n"
             "➤ 查詢 2330\n"
             "➤ 查詢 2330 20250701\n"
-            "➤ 查配息 2330")
+            "➤ 查配息 2330"
+        )
 
-    await line_bot_api.reply_message(
-        event.reply_token,
-        messages=[TextMessage(text=reply_text)]
-    )
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
