@@ -6,7 +6,6 @@ import os
 import re
 from datetime import datetime
 import logging
-import asyncio
 
 from routers.stock import get_stock_info
 from routers.dividend import get_dividend_info
@@ -38,14 +37,15 @@ async def webhook(request: Request):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-def handle_text_message(event: MessageEvent):
-    asyncio.create_task(process_event(event))  # ✅ 修正錯誤呼叫方式，避免 coroutine not awaited
+async def handle_text_message(event: MessageEvent):  # ✅ async callback
+    await process_event(event)
 
 
 async def process_event(event: MessageEvent):
     user_text = event.message.text.strip()
     reply_text = ""
 
+    # 股票查詢
     if user_text.startswith("查詢"):
         parts = user_text.replace("查詢", "").strip().split()
         stock_id = parts[0] if len(parts) >= 1 else None
@@ -92,6 +92,7 @@ async def process_event(event: MessageEvent):
                 if "提示" in info:
                     reply_text += f"\n🛈 {info['提示']}"
 
+    # 配息查詢
     elif user_text.startswith("查配息"):
         stock_id = user_text.replace("查配息", "").strip()
 
