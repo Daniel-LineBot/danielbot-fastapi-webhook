@@ -60,7 +60,7 @@ async def process_event(event: MessageEvent):
                     reply_text = f"❗️查無效日期：{date}"
 
         if not reply_text:
-            try:
+            try: 
                 info = await get_stock_info(stock_id, date)
                 print("📦 查股 info 回傳：", info)
             except Exception as e:
