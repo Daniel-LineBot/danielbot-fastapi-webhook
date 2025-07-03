@@ -11,7 +11,7 @@ from routers.stock import get_stock_info
 from routers.dividend import get_dividend_info
 
 router = APIRouter()
-
+   
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
