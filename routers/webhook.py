@@ -39,7 +39,8 @@ async def webhook(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
-    asyncio.create_task(process_event(event))  # ✅ 正確 async 呼叫方式
+    # ✅ 正確用法，建立背景任務處理 async 函式，避免 RuntimeWarning
+    asyncio.create_task(process_event(event))
 
 
 async def process_event(event: MessageEvent):
