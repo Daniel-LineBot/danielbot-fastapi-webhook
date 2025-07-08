@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Request
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -61,7 +62,7 @@ async def process_event(event: MessageEvent):
         else:
             try:
                 if date:
-                    datetime.strptime(date, "%Y%m%d")  # 防止非法日期
+                    datetime.strptime(date, "%Y%m%d")
                     info = await get_stock_info(stock_id, date)
                 else:
                     info = await get_stock_info(stock_id)
@@ -82,7 +83,7 @@ async def process_event(event: MessageEvent):
                     f"產業別：{info.get('產業別', info.get('資料來源', '-')})"
                 )
                 if info.get("提示"):
-                    reply_text += f"\n💡 {info['提示']}"  # ✅ 括號已修正
+                    reply_text += f"\n💡 {info['提示']}"
             else:
                 reply_text = "⚠️ 查無資料，請確認股票代號或日期是否正確"
     else:
