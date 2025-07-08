@@ -36,11 +36,11 @@ async def webhook(request: Request):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-def handle_text_message(event: MessageEvent):
+def handle_text_message(event: MessageEvent):  # ✅ 使用同步函式 callback
     try:
-        asyncio.create_task(process_event(event))  # ✅ 正確 async 呼叫方式
+        asyncio.create_task(process_event(event))  # ✅ 建立 coroutine task
     except Exception as e:
-        logger.exception(f"📛 webhook 例外：{str(e)}")
+        logger.exception(f"📛 webhook callback 發生例外：{str(e)}")
 
 
 async def process_event(event: MessageEvent):
@@ -74,9 +74,7 @@ async def process_event(event: MessageEvent):
     else:
         reply_text = (
             f"你剛說的是：{text}\n\n"
-            "💡 範例：查詢 2330"
+            "💡 指令範例：查詢 2330"
         )
 
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
-
-  
