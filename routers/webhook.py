@@ -38,7 +38,7 @@ async def webhook(request: Request):
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
     try:
-        asyncio.run(process_event(event))
+        asyncio.create_task(process_event(event))  # ✅ 正確 async 呼叫方式
     except Exception as e:
         logger.exception(f"📛 處理 LINE 訊息時例外：{str(e)}")
 
