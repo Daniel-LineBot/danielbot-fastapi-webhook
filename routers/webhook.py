@@ -6,6 +6,7 @@ import os
 import logging
 import re
 import asyncio
+from datetime import datetime
 
 from routers.stock import get_stock_info
 
@@ -49,12 +50,22 @@ async def process_event(event: MessageEvent):
     reply_text = ""
 
     if text.startswith("查詢"):
-        stock_id = text.replace("查詢", "").strip()
+        args = text.replace("查詢", "").strip().split()
+        stock_id = args[0] if len(args) >= 1 else ""
+        date = args[1] if len(args) >= 2 else None
+
         if not re.fullmatch(r"\d{4}", stock_id):
             reply_text = "❗️請輸入正確的四位數股票代號，例如：查詢 2330"
+        elif date and not re.fullmatch(r"\d{8}", date):
+            reply_text = "❗️日期格式錯誤，請使用 YYYYMMDD，例如：20250701"
         else:
             try:
-                info = await get_stock_info(stock_id)
+                if date:
+                    datetime.strptime(date, "%Y%m%d")  # ✅ 防止非法日期進入
+                    info = await get_stock_info(stock_id, date)
+                else:
+                    info = await get_stock_info(stock_id)
+
                 logger.info(f"📦 查股 info 回傳：{info}")
             except Exception as e:
                 reply_text = f"⚠️ 查詢時發生錯誤：{str(e)}"
@@ -63,19 +74,21 @@ async def process_event(event: MessageEvent):
 
             if isinstance(info, dict) and "error" in info:
                 reply_text = f"⚠️ {info['error']}"
-            elif info.get("成交價"):
+            elif info.get("成交價") or info.get("收盤"):
                 reply_text = (
                     f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
-                    f"成交價：{info.get('成交價', '-')} 元\n"
+                    f"成交價：{info.get('成交價', info.get('收盤', '-'))} 元\n"
                     f"開盤：{info.get('開盤', '-')} 元\n"
-                    f"產業別：{info.get('產業別', '-')}"
+                    f"產業別：{info.get('產業別', info.get('資料來源', '-')})"
                 )
+                if info.get("提示"):
+                    reply_text += f"\n💡 {info['提示']}"
             else:
-                reply_text = "⚠️ 查無資料，請確認股票代號是否正確"
+                reply_text = "⚠️ 查無資料，請確認股票代號或日期是否正確"
     else:
         reply_text = (
             f"你剛說的是：{text}\n\n"
-            "💡 指令範例：查詢 2330"
+            "💡 指令範例：\n查詢 2330\n查詢 2330 20250701"
         )
 
     try:
