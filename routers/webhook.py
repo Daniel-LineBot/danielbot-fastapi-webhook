@@ -5,7 +5,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 import logging
 import re
-import asyncio 
+import asyncio
 from datetime import datetime
 
 from routers.stock import get_stock_info
@@ -82,7 +82,7 @@ async def process_event(event: MessageEvent):
                     f"產業別：{info.get('產業別', info.get('資料來源', '-')})"
                 )
                 if info.get("提示"):
-                    reply_text += f"\n💡 {info['提示']}"
+                    reply_text += f"\n💡 {info['提示']}"  # ✅ 括號已修正
             else:
                 reply_text = "⚠️ 查無資料，請確認股票代號或日期是否正確"
     else:
@@ -95,4 +95,3 @@ async def process_event(event: MessageEvent):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
-
