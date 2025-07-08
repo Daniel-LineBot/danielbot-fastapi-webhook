@@ -36,9 +36,10 @@ async def webhook(request: Request):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-def handle_text_message(event: MessageEvent):  # ✅ 使用同步函式 callback
+def handle_text_message(event: MessageEvent):  # ✅ 使用同步 callback
     try:
-        asyncio.create_task(process_event(event))  # ✅ 建立 coroutine task
+        logger.info(f"✅ webhook 收到 LINE 訊息：{event.message.text}")
+        asyncio.create_task(process_event(event))  # ✅ coroutine 觸發成功
     except Exception as e:
         logger.exception(f"📛 webhook callback 發生例外：{str(e)}")
 
@@ -71,6 +72,7 @@ async def process_event(event: MessageEvent):
                 )
             else:
                 reply_text = "⚠️ 查無資料，請確認股票代號是否正確"
+
     else:
         reply_text = (
             f"你剛說的是：{text}\n\n"
