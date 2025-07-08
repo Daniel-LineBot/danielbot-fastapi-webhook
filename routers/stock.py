@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 import httpx
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime, timedelta
 from fastapi.logger import logger
 
@@ -8,7 +8,11 @@ router = APIRouter()
 
 
 @router.get("/stock/{stock_id}")
-async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None)):
+async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query(default=None)):
+    # ⚠️ 修復：確認 date 是字串
+    if date is not None and not isinstance(date, str):
+        date = str(date)
+
     if date:
         return await get_historical_data(stock_id, date)
     else:
@@ -52,7 +56,7 @@ async def get_realtime_data(stock_id: str):
 
 async def get_historical_data(stock_id: str, date: str):
     try:
-        original_query_date = datetime.strptime(date, "%Y%m%d")
+        original_query_date = datetime.strptime(str(date), "%Y%m%d")  # ✅ 強制轉字串處理 Query 物件
     except ValueError:
         return {"error": "請使用 YYYYMMDD 格式輸入日期（例如 20250701）"}
 
