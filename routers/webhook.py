@@ -5,8 +5,9 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 import logging
 import re
+import asyncio
 
-from routers.stock import get_stock_info  # ✅ 只載入查價
+from routers.stock import get_stock_info
 
 router = APIRouter()
 
@@ -35,7 +36,14 @@ async def webhook(request: Request):
 
 
 @handler.add(MessageEvent, message=TextMessage)
-async def handle_text_message(event: MessageEvent):  # ✅ 使用 async callback
+def handle_text_message(event: MessageEvent):
+    try:
+        asyncio.run(process_event(event))
+    except Exception as e:
+        logger.exception(f"📛 處理 LINE 訊息時例外：{str(e)}")
+
+
+async def process_event(event: MessageEvent):
     text = event.message.text.strip()
     reply_text = ""
 
@@ -63,7 +71,6 @@ async def handle_text_message(event: MessageEvent):  # ✅ 使用 async callback
                 )
             else:
                 reply_text = "⚠️ 查無資料，請確認股票代號是否正確"
-
     else:
         reply_text = (
             f"你剛說的是：{text}\n\n"
@@ -71,4 +78,3 @@ async def handle_text_message(event: MessageEvent):  # ✅ 使用 async callback
         )
 
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
-
