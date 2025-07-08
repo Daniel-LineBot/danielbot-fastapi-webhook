@@ -61,7 +61,7 @@ async def process_event(event: MessageEvent):
         else:
             try:
                 if date:
-                    datetime.strptime(date, "%Y%m%d")  # ✅ 防止非法日期進入
+                    datetime.strptime(date, "%Y%m%d")  # 防止非法日期
                     info = await get_stock_info(stock_id, date)
                 else:
                     info = await get_stock_info(stock_id)
@@ -95,3 +95,4 @@ async def process_event(event: MessageEvent):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
+
