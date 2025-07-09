@@ -8,7 +8,7 @@ import re
 import asyncio
 from datetime import datetime
 
-from routers.stock import get_stock_info
+from routers.stock import get_stock_info     
 
 router = APIRouter()
 
