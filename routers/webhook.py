@@ -81,6 +81,7 @@ async def process_event(event: MessageEvent):
                     f"開盤：{info.get('開盤', '-')} 元\n"
                     f"產業別：{info.get('產業別', info.get('資料來源', '-')})"
                 )
+
                 if info.get("提示"):
                     reply_text += f"\n💡 {info['提示']}"
             else:
