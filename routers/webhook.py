@@ -8,8 +8,6 @@ import re
 import asyncio
 from datetime import datetime
 
-from routers.stock import get_stock_info
-
 router = APIRouter()
 
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
@@ -21,6 +19,18 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
 
+# Mock stock info function for testing
+def get_stock_info(stock_id: str, date: str = None):
+    logger.info(f"🔍 模擬查詢 get_stock_info(stock_id={stock_id}, date={date})")
+    return {
+        "股票名稱": "台積電",
+        "股票代號": stock_id,
+        "成交價": "888",
+        "開盤": "870",
+        "產業別": "半導體",
+        "資料來源": "模擬資料",
+        "提示": "這是測試資料"
+    }
 
 @router.post("/webhook")
 async def webhook(request: Request):
@@ -62,9 +72,9 @@ async def process_event(event: MessageEvent):
             try:
                 if date:
                     datetime.strptime(date, "%Y%m%d")
-                    info = await get_stock_info(stock_id, date)
+                    info = get_stock_info(stock_id, date)
                 else:
-                    info = await get_stock_info(stock_id)
+                    info = get_stock_info(stock_id)
 
                 logger.info(f"📦 查股 info 回傳：{info}")
             except Exception as e:
@@ -96,3 +106,5 @@ async def process_event(event: MessageEvent):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
+
+  
