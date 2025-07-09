@@ -79,7 +79,7 @@ async def process_event(event: MessageEvent):
                     f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
                     f"成交價：{info.get('成交價', info.get('收盤', '-'))} 元\n"
                     f"開盤：{info.get('開盤', '-')} 元\n"
-                    f"產業別：{info.get('產業別', info.get('資料來源', '-')})"
+                    f"產業別：{info.get('產業別', info.get('資料來源', '-'))}"
                 )
 
                 if info.get("提示"):
