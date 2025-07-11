@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
-from linebot.v3.webhook import AsyncWebhookHandler
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot import LineBotApi, WebhookHandler
 from linebot.v3.messaging import AsyncLineBotApi
 from linebot.v3.messaging.models import TextMessage
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
