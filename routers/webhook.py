@@ -1,25 +1,21 @@
 from fastapi import APIRouter, Request
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot import LineBotApi, WebhookHandler
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.exceptions import InvalidSignatureError
-from linebot.aiohttp_async_http_client import AioHttpAsyncHttpClient
 import os
 import logging
 import re
 from datetime import datetime
 
-from routers.stock import get_stock_info  # 已確認為 TWSE 正式版
+from routers.stock import get_stock_info  # TWSE 查詢模組
 
 router = APIRouter()
 
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
-line_bot_api = AsyncLineBotApi(
-    channel_access_token=LINE_CHANNEL_ACCESS_TOKEN,
-    http_client=AioHttpAsyncHttpClient()
-)
-handler = AsyncWebhookHandler(LINE_CHANNEL_SECRET)
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
@@ -30,7 +26,7 @@ async def webhook(request: Request):
     signature = request.headers.get("x-line-signature")
 
     try:
-        await handler.handle(body.decode("utf-8"), signature)
+        handler.handle(body.decode("utf-8"), signature)
     except InvalidSignatureError:
         logger.warning("❌ LINE Webhook Signature 驗證失敗")
         return "Invalid signature", 400
@@ -38,8 +34,17 @@ async def webhook(request: Request):
     return "OK"
 
 
-@handler.add(MessageEvent, message=TextMessageContent)
-async def handle_text_message(event: MessageEvent):
+@handler.add(MessageEvent, message=TextMessage)
+def handle_text_message(event: MessageEvent):
+    try:
+        logger.info(f"✅ webhook 收到 LINE 訊息：{event.message.text}")
+        from asyncio import create_task
+        create_task(process_event(event))
+    except Exception as e:
+        logger.exception(f"📛 webhook callback 發生例外：{str(e)}")
+
+
+async def process_event(event: MessageEvent):
     text = event.message.text.strip()
     reply_text = ""
 
@@ -59,7 +64,6 @@ async def handle_text_message(event: MessageEvent):
                     info = await get_stock_info(stock_id, date)
                 else:
                     info = await get_stock_info(stock_id)
-
                 logger.info(f"📦 查股 info 回傳：{info}")
             except Exception as e:
                 reply_text = f"⚠️ 查詢時發生錯誤：{str(e)}"
@@ -73,9 +77,8 @@ async def handle_text_message(event: MessageEvent):
                     f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
                     f"成交價：{info.get('成交價', info.get('收盤', '-'))} 元\n"
                     f"開盤：{info.get('開盤', '-')} 元\n"
-                    f"產業別：{info.get('產業別', info.get('資料來源', '-'))}"
+                    f"產業別：{info.get('產業別', info.get('資料來源', '-')})"
                 )
-
                 if info.get("提示"):
                     reply_text += f"\n💡 {info['提示']}"
             else:
@@ -87,9 +90,7 @@ async def handle_text_message(event: MessageEvent):
         )
 
     try:
-        await line_bot_api.reply_message(
-            event.reply_token,
-            messages=[TextMessage(text=reply_text)]
-        )
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
+
