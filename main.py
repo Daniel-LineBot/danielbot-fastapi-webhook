@@ -1,3 +1,4 @@
+# main.py 只需初始化 FastAPI 與掛載 router，不定義 webhook handler
 from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 from linebot import LineBotApi, WebhookHandler
@@ -12,9 +13,8 @@ app = FastAPI()
 app.include_router(webhook.router)
 app.include_router(stock.router)
 
-print("✅ FastAPI 應用啟動，正在監聽 0.0.0.0:8080")
-print("👋 FastAPI app 正在啟動中…")
-
+print("✅ DanielBot webhook app 啟動中… FastAPI 已掛上 /webhook")
+print("📚 所有已掛載的路由：", app.routes)
 
 # LINE Bot 憑證
 LINE_SECRET = os.getenv("LINE_CHANNEL_SECRET")
