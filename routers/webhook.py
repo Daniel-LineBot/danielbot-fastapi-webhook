@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request
+from fastapi.responses import PlainTextResponse
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.exceptions import InvalidSignatureError
@@ -6,9 +7,10 @@ import os
 import logging
 import re
 from datetime import datetime
+from asyncio import create_task
 
 from routers.stock import get_stock_info  # TWSE 查詢模組
-  
+
 router = APIRouter()
 
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
@@ -29,20 +31,17 @@ async def webhook(request: Request):
         handler.handle(body.decode("utf-8"), signature)
     except InvalidSignatureError:
         logger.warning("❌ LINE Webhook Signature 驗證失敗")
-        return "Invalid signature", 400
+        return PlainTextResponse("Invalid signature", status_code=400)
 
-    return "OK"
-
+    return PlainTextResponse("OK")
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
     try:
         logger.info(f"✅ webhook 收到 LINE 訊息：{event.message.text}")
-        from asyncio import create_task
         create_task(process_event(event))
     except Exception as e:
         logger.exception(f"📛 webhook callback 發生例外：{str(e)}")
-
 
 async def process_event(event: MessageEvent):
     text = event.message.text.strip()
@@ -73,12 +72,12 @@ async def process_event(event: MessageEvent):
             if isinstance(info, dict) and "error" in info:
                 reply_text = f"⚠️ {info['error']}"
             elif info.get("成交價") or info.get("收盤"):
-                  reply_text = (
-                      f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
-                      f"成交價：{info.get('成交價', info.get('收盤', '-'))} 元\n"
-                      f"開盤：{info.get('開盤', '-')} 元\n"
-                      f"產業別：{info.get('產業別', info.get('資料來源', '-')})"
-                  )
+                reply_text = (
+                    f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
+                    f"成交價：{info.get('成交價', info.get('收盤', '-'))} 元\n"
+                    f"開盤：{info.get('開盤', '-')} 元\n"
+                    f"產業別：{info.get('產業別', info.get('資料來源', '-')})"
+                )
                 if info.get("提示"):
                     reply_text += f"\n💡 {info['提示']}"
             else:
@@ -93,4 +92,3 @@ async def process_event(event: MessageEvent):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
-
