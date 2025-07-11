@@ -22,15 +22,8 @@ LINE_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 if not LINE_SECRET or not LINE_TOKEN:
     raise RuntimeError("請先設定環境變數 LINE_CHANNEL_SECRET、LINE_CHANNEL_ACCESS_TOKEN")
 
-line_bot_api = LineBotApi(LINE_TOKEN)
-handler = WebhookHandler(LINE_SECRET)
-
-
-@handler.add(MessageEvent, message=TextMessage)
-def handle_text(event):
-    user_text = event.message.text.strip()
-    reply = f"你好，我是 DanielBot ??\n你剛才說的是：「{user_text}」"
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+line_bot_api = LineBotApi(LINE_TOKEN)  # 用來 broadcast 或 push
+handler = WebhookHandler(LINE_SECRET)  # webhook.py 引入同一實例
 
 
 # --- 2) Copilot alert endpoint ---
