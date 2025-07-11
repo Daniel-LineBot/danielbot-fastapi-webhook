@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 import httpx
 from typing import Optional, Union
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta ,time
 from fastapi.logger import logger
 
 router = APIRouter()
@@ -13,10 +13,27 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query
     if date is not None and not isinstance(date, str):
         date = str(date)
 
+from datetime import datetime, time
+
+def is_twse_open_now():
+    now = datetime.now().time()
+    return time(9, 0) <= now <= time(13, 30)
+
+@router.get("/stock/{stock_id}")
+async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None)):
+    if date is not None and not isinstance(date, str):
+        date = str(date)
+
     if date:
         return await get_historical_data(stock_id, date)
-    else:
+
+    # ✅ 根據時間決定查詢類型
+    if is_twse_open_now():
         return await get_realtime_data(stock_id)
+    else:
+        today = datetime.today().strftime("%Y%m%d")
+        return await get_historical_data(stock_id, today)
+
 
 
 async def get_realtime_data(stock_id: str):
