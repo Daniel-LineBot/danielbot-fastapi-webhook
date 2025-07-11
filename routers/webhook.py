@@ -8,7 +8,7 @@ import re
 import asyncio
 from datetime import datetime
 
-from routers.stock import get_stock_info as real_get_stock_info
+from routers.stock import get_stock_info  # 已確認為 TWSE 正式版
 
 router = APIRouter()
 
@@ -61,9 +61,9 @@ async def process_event(event: MessageEvent):
             try:
                 if date:
                     datetime.strptime(date, "%Y%m%d")
-                    info = await real_get_stock_info(stock_id, date)
+                    info = await get_stock_info(stock_id, date)
                 else:
-                    info = await real_get_stock_info(stock_id)
+                    info = await get_stock_info(stock_id)
 
                 logger.info(f"📦 查股 info 回傳：{info}")
             except Exception as e:
