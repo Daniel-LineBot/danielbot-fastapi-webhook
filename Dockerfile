@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# 設定工作目錄
+# 設定工作目錄 
 WORKDIR /app
 
 # 複製依賴檔並安裝套件
