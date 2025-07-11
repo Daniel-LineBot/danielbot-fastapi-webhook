@@ -5,9 +5,6 @@ from datetime import datetime, timedelta, time
 from fastapi.logger import logger
 
 router = APIRouter()
-🪛 DanielBot stock.py fallback patch 版本載入成功
-logger.info("🪛 DanielBot stock.py fallback patch 版本載入成功")
-
 
 def is_twse_open():
     now = datetime.now().time()
@@ -15,6 +12,9 @@ def is_twse_open():
 
 @router.get("/stock/{stock_id}")
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query(default=None)):
+    # DanielBot stock.py fallback patch 版本載入成功
+    logger.info("🪛 DanielBot stock.py fallback patch 版本載入成功")
+    
     # 🔧 統一字串格式（不論來源）
     if date is not None and not isinstance(date, str):
         date = str(date)
