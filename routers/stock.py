@@ -12,20 +12,18 @@ def is_twse_open():
 
 @router.get("/stock/{stock_id}")
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query(default=None)):
-    # ⚠️ 修復：確認 date 是字串
     if date is not None and not isinstance(date, str):
         date = str(date)
 
     if date:
         return await get_historical_data(stock_id, date)
 
-    # ✅ 無 date 時，自動根據時間決定查詢模式
+    logger.info(f"[TWSE fallback] 無指定日期 ➜ 判斷時間 ➜ {datetime.now().strftime('%H:%M:%S')} ➜ 使用 {'即時' if is_twse_open() else '歷史'}查詢模式")
+
     if is_twse_open():
-        logger.info(f"[TWSE 判斷] 開盤中 ➜ 查即時")
         return await get_realtime_data(stock_id)
     else:
         today = datetime.today().strftime("%Y%m%d")
-        logger.info(f"[TWSE 判斷] 已收盤 ➜ 查 {today} 歷史資料")
         return await get_historical_data(stock_id, today)
 
 
@@ -66,14 +64,13 @@ async def get_realtime_data(stock_id: str):
 
 async def get_historical_data(stock_id: str, date: str):
     try:
-        original_query_date = datetime.strptime(str(date), "%Y%m%d")  # ✅ 強制轉字串處理 Query 物件
+        original_query_date = datetime.strptime(str(date), "%Y%m%d")
     except ValueError:
         return {"error": "請使用 YYYYMMDD 格式輸入日期（例如 20250701）"}
 
     target_date = original_query_date
     retries = 7
     fallback_used = False
-    actual_data_date = None
 
     for _ in range(retries):
         query_month = target_date.strftime("%Y%m")
