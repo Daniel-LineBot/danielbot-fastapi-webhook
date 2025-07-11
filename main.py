@@ -26,15 +26,6 @@ if not LINE_SECRET or not LINE_TOKEN:
 line_bot_api = LineBotApi(LINE_TOKEN)
 handler = WebhookHandler(LINE_SECRET)
 
-# --- 1) LINE Webhook endpoint ---
-
-  #  signature = request.headers.get("x-line-signature", "")
-#    body = (await request.body()).decode("utf-8")
-#    try:
-#        handler.handle(body, signature)
-#    except InvalidSignatureError:
- #       raise HTTPException(status_code=400, detail="Invalid signature")
- #   return "OK"
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text(event):
