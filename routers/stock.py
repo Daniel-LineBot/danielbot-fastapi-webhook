@@ -15,19 +15,18 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query
     logger.info("🪛 DanielBot stock.py fallback patch 版本載入成功")
     logger.info(f"📦 get_stock_info 接收到 date 參數：{repr(date)}")
 
-    # 🔧 統一字串格式（不論來源）
     if date is not None and not isinstance(date, str):
         date = str(date)
 
-    # ✅ 檢查是否提供有效 date（非空字串）
+    # ✅ 判斷是否為有效日期（排除 None, 空字串）
     if date and date.strip():
         logger.info(f"[TWSE 查詢] 使用者指定日期：{date.strip()} ➜ 查歷史資料")
         return await get_historical_data(stock_id, date.strip())
 
-    # 🔁 fallback ➜ 根據時間自動切換查詢方式
+    # ✅ fallback 模式：根據時間決定查即時或今日盤後
     now_time = datetime.now().strftime("%H:%M:%S")
-    logger.info(f"🧪 fallback 判斷 ➜ 時間 {now_time} ➜ 使用 {'即時查詢' if is_twse_open() else '歷史查詢'} 模式")
-    logger.info(f"[TWSE fallback] 無指定日期 ➜ 判斷時間 ➜ {now_time} ➜ 使用 {'即時' if is_twse_open() else '歷史'}查詢模式")
+    mode = "即時查詢" if is_twse_open() else "歷史查詢"
+    logger.info(f"🧪 fallback 判斷 ➜ 時間 {now_time} ➜ 使用 {mode} 模式")
 
     if is_twse_open():
         return await get_realtime_data(stock_id)
@@ -132,3 +131,4 @@ async def get_historical_data(stock_id: str, date: str):
     return {
         "error": f"{date} 起往前 7 日內查無任何交易紀錄（可能為連假或 TWSE 尚未釋出該月資料）"
     }
+
