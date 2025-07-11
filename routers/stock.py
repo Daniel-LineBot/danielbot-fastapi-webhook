@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Query
 import httpx
 from typing import Optional, Union
-from datetime import datetime, timedelta ,time
+from datetime import datetime, timedelta, time
 from fastapi.logger import logger
 
 router = APIRouter()
 
+def is_twse_open():
+    now = datetime.now().time()
+    return time(9, 0) <= now <= time(13, 30)
 
 @router.get("/stock/{stock_id}")
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query(default=None)):
@@ -13,27 +16,17 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query
     if date is not None and not isinstance(date, str):
         date = str(date)
 
-from datetime import datetime, time
-
-def is_twse_open_now():
-    now = datetime.now().time()
-    return time(9, 0) <= now <= time(13, 30)
-
-@router.get("/stock/{stock_id}")
-async def get_stock_info(stock_id: str, date: Optional[str] = Query(default=None)):
-    if date is not None and not isinstance(date, str):
-        date = str(date)
-
     if date:
         return await get_historical_data(stock_id, date)
 
-    # ✅ 根據時間決定查詢類型
-    if is_twse_open_now():
+    # ✅ 無 date 時，自動根據時間決定查詢模式
+    if is_twse_open():
+        logger.info(f"[TWSE 判斷] 開盤中 ➜ 查即時")
         return await get_realtime_data(stock_id)
     else:
         today = datetime.today().strftime("%Y%m%d")
+        logger.info(f"[TWSE 判斷] 已收盤 ➜ 查 {today} 歷史資料")
         return await get_historical_data(stock_id, today)
-
 
 
 async def get_realtime_data(stock_id: str):
