@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Request
-from linebot import LineBotApi, WebhookHandler
+from linebot.v3.webhook import AsyncWebhookHandler
+from linebot.v3.messaging import AsyncLineBotApi
+from linebot.v3.messaging.models import TextMessage
+from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.aiohttp_async_http_client import AioHttpAsyncHttpClient
 import os
 import logging
 import re
-import asyncio
 from datetime import datetime
 
 from routers.stock import get_stock_info  # 已確認為 TWSE 正式版
@@ -15,8 +17,11 @@ router = APIRouter()
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
-line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
-handler = WebhookHandler(LINE_CHANNEL_SECRET)
+line_bot_api = AsyncLineBotApi(
+    channel_access_token=LINE_CHANNEL_ACCESS_TOKEN,
+    http_client=AioHttpAsyncHttpClient()
+)
+handler = AsyncWebhookHandler(LINE_CHANNEL_SECRET)
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
@@ -27,7 +32,7 @@ async def webhook(request: Request):
     signature = request.headers.get("x-line-signature")
 
     try:
-        handler.handle(body.decode("utf-8"), signature)
+        await handler.handle(body.decode("utf-8"), signature)
     except InvalidSignatureError:
         logger.warning("❌ LINE Webhook Signature 驗證失敗")
         return "Invalid signature", 400
@@ -35,16 +40,8 @@ async def webhook(request: Request):
     return "OK"
 
 
-@handler.add(MessageEvent, message=TextMessage)
-def handle_text_message(event: MessageEvent):
-    try:
-        logger.info(f"✅ webhook 收到 LINE 訊息：{event.message.text}")
-        asyncio.create_task(process_event(event))
-    except Exception as e:
-        logger.exception(f"📛 webhook callback 發生例外：{str(e)}")
-
-
-async def process_event(event: MessageEvent):
+@handler.add(MessageEvent, message=TextMessageContent)
+async def handle_text_message(event: MessageEvent):
     text = event.message.text.strip()
     reply_text = ""
 
@@ -92,6 +89,9 @@ async def process_event(event: MessageEvent):
         )
 
     try:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+        await line_bot_api.reply_message(
+            event.reply_token,
+            messages=[TextMessage(text=reply_text)]
+        )
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
