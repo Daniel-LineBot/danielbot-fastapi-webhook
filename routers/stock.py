@@ -20,7 +20,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query
         logger.info(f"[TWSE 查詢] 使用者指定日期：{date} ➜ 查歷史資料")
         return await get_historical_data(stock_id, date)
 
-    # 🔁 fallback ➜ 根據時間自動切換查詢方式
+    # 🔁 fallback ➜ 根據時間自動切換查詢方式     
     now_time = datetime.now().strftime("%H:%M:%S")
     logger.info(f"[TWSE fallback] 無指定日期 ➜ 判斷時間 ➜ {now_time} ➜ 使用 {'即時' if is_twse_open() else '歷史'}查詢模式")
 
