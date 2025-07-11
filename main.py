@@ -6,15 +6,14 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 
 from routers import webhook
-app = FastAPI()
-print("✅ FastAPI 應用啟動，正在監聽 0.0.0.0:8080")
-
-app.include_router(webhook.router)
-
-print("👋 FastAPI app 正在啟動中…")
-
 from routers import stock
-app.include_router(stock.router) 
+
+app = FastAPI()
+app.include_router(webhook.router)
+app.include_router(stock.router)
+
+print("✅ FastAPI 應用啟動，正在監聽 0.0.0.0:8080")
+print("👋 FastAPI app 正在啟動中…")
 
 
 # LINE Bot 憑證
