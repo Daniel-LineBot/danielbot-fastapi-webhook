@@ -72,11 +72,13 @@ async def process_event(event: MessageEvent):
             if isinstance(info, dict) and "error" in info:
                 reply_text = f"⚠️ {info['error']}"
             elif info.get("成交價") or info.get("收盤"):
+                industry = info.get("產業別") or info.get("資料來源", "-")
+                
                 reply_text = (
                     f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
                     f"成交價：{info.get('成交價', info.get('收盤', '-'))} 元\n"
                     f"開盤：{info.get('開盤', '-')} 元\n"
-                    f"產業別：{info.get('產業別', info.get('資料來源', '-')})"
+                    f"產業別：{industry}"
                 )
                 if info.get("提示"):
                     reply_text += f"\n💡 {info['提示']}"
