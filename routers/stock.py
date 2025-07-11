@@ -12,18 +12,23 @@ def is_twse_open():
 
 @router.get("/stock/{stock_id}")
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query(default=None)):
+    # 🔧 統一字串格式（不論來源）
     if date is not None and not isinstance(date, str):
         date = str(date)
 
     if date:
+        logger.info(f"[TWSE 查詢] 使用者指定日期：{date} ➜ 查歷史資料")
         return await get_historical_data(stock_id, date)
 
-    logger.info(f"[TWSE fallback] 無指定日期 ➜ 判斷時間 ➜ {datetime.now().strftime('%H:%M:%S')} ➜ 使用 {'即時' if is_twse_open() else '歷史'}查詢模式")
+    # 🔁 fallback ➜ 根據時間自動切換查詢方式
+    now_time = datetime.now().strftime("%H:%M:%S")
+    logger.info(f"[TWSE fallback] 無指定日期 ➜ 判斷時間 ➜ {now_time} ➜ 使用 {'即時' if is_twse_open() else '歷史'}查詢模式")
 
     if is_twse_open():
         return await get_realtime_data(stock_id)
     else:
         today = datetime.today().strftime("%Y%m%d")
+        logger.info(f"[TWSE fallback] 已收盤 ➜ fallback 查 {today} 的盤後資料")
         return await get_historical_data(stock_id, today)
 
 
@@ -40,6 +45,7 @@ async def get_realtime_data(stock_id: str):
             if "json" not in response.headers.get("content-type", "").lower():
                 logger.error(f"[TWSE 即時] 非 JSON 回應：{response.text[:300]}")
                 return {"error": "TWSE 即時查詢回傳非預期格式，請稍後再試或確認服務是否中斷"}
+
             data = response.json()
         except Exception as e:
             logger.exception(f"[TWSE 即時] 資料解析失敗：{str(e)}")
@@ -87,6 +93,7 @@ async def get_historical_data(stock_id: str, date: str):
                 if "json" not in content_type.lower():
                     logger.warning(f"[TWSE 歷史] 回傳非 JSON：{response.text[:300]}")
                     return {"error": f"{date} 查詢失敗：TWSE 尚未釋出 {query_month} 月份資料"}
+
                 data = response.json()
         except Exception as e:
             logger.exception(f"[TWSE 歷史] 資料取得失敗：{str(e)}")
