@@ -20,7 +20,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = Query
         logger.info(f"[TWSE 查詢] 使用者指定日期：{date} ➜ 查歷史資料")
         return await get_historical_data(stock_id, date)
 
-    # 🔁 fallback ➜ 根據時間自動切換查詢方式     
+    # 🔁 fallback ➜ 根據時間自動切換查詢方式      
     logger.info("🧪 DanielBot stock.py fallback patch 版本載入成功")
     now_time = datetime.now().strftime("%H:%M:%S")
     logger.info(f"🧪 fallback 判斷 ➜ 時間 {now_time} ➜ 使用 {'即時查詢' if is_twse_open() else '歷史查詢'} 模式")
