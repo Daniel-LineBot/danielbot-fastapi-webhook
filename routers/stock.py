@@ -5,6 +5,9 @@ from datetime import datetime, timedelta, time
 from fastapi.logger import logger
 
 router = APIRouter()
+🪛 DanielBot stock.py fallback patch 版本載入成功
+logger.info("🪛 DanielBot stock.py fallback patch 版本載入成功")
+
 
 def is_twse_open():
     now = datetime.now().time()
