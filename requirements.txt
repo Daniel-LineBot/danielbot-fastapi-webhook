@@ -7,8 +7,8 @@ pydantic
 python-dotenv
 uvicorn[standard]
 httpx
-line-bot-sdk==3.3.0
-aiohttp
+pip install line-bot-sdk==3.3.0 aiohttp
+pip freeze > requirements.txt
 
 
 
