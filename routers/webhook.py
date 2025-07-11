@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 
 from routers.stock import get_stock_info  # TWSE 查詢模組
-
+  
 router = APIRouter()
 
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
