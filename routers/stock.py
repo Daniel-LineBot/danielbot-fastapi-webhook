@@ -40,7 +40,6 @@ async def get_realtime_data(stock_id: str):
             if "json" not in response.headers.get("content-type", "").lower():
                 logger.error(f"[TWSE 即時] 非 JSON 回應：{response.text[:300]}")
                 return {"error": "TWSE 即時查詢回傳非預期格式，請稍後再試或確認服務是否中斷"}
-
             data = response.json()
         except Exception as e:
             logger.exception(f"[TWSE 即時] 資料解析失敗：{str(e)}")
@@ -88,16 +87,12 @@ async def get_historical_data(stock_id: str, date: str):
                 if "json" not in content_type.lower():
                     logger.warning(f"[TWSE 歷史] 回傳非 JSON：{response.text[:300]}")
                     return {"error": f"{date} 查詢失敗：TWSE 尚未釋出 {query_month} 月份資料"}
-
                 data = response.json()
         except Exception as e:
             logger.exception(f"[TWSE 歷史] 資料取得失敗：{str(e)}")
             return {"error": f"取得 TWSE 資料失敗：{str(e)}"}
 
-        available_dates = [
-            row[0] for row in data.get("data", [])
-            if isinstance(row, list) and row
-        ]
+        available_dates = [row[0] for row in data.get("data", []) if isinstance(row, list) and row]
         logger.info(f"[TWSE] {query_month} 可用資料日：{available_dates}")
 
         for row in data.get("data", []):
