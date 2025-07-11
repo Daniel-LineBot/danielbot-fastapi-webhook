@@ -1,14 +1,14 @@
 fastapi
 uvicorn
-line-bot-sdk
+uvicorn[standard]
+line-bot-sdk==3.3.0
+aiohttp
 requests-html
 lxml_html_clean
 pydantic
 python-dotenv
-uvicorn[standard]
 httpx
-pip install line-bot-sdk==3.3.0 aiohttp
-pip freeze > requirements.txt
+
 
 
 
