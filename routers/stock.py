@@ -165,4 +165,46 @@ async def get_historical_data(stock_id: str, date: str):
         logger.info(f"📡 [TWSE 歷史] 查詢 ➜ stock_id={stock_id}, 月={query_month}, 日={query_day}")
 
         try:
-            async with httpx.AsyncClient()
+            async with httpx.AsyncClient() as client:  # ✅ 這裡補上冒號
+                response = await client.get(url, headers=headers, timeout=10, follow_redirects=True)
+                logger.info(f"[TWSE 歷史] 回應狀態 ➜ {response.status_code}")
+                data = response.json()
+                logger.info(f"[TWSE 歷史] 回傳 JSON：{data}")
+        except Exception as e:
+            logger.exception(f"[TWSE 歷史] 呼叫失敗 ➜ {str(e)}")
+            return {"error": f"TWSE 歷史資料取得失敗：{str(e)}"}
+
+        # 將 target_date 轉成民國格式 ➜ 與 row[0] 比對
+        twse_target_date = f"{target_date.year - 1911:03d}/{target_date.month:02d}/{target_date.day:02d}"
+
+        for row in data.get("data", []):
+            if isinstance(row, list) and row and row[0]:
+                row_date_str = str(row[0]).strip()
+                if row_date_str == twse_target_date:
+                    logger.info(f"[TWSE 歷史] 成交價 ➜ {row[6]} ➜ 資料日 ➜ {twse_target_date}")
+                    result = {
+                        "資料來源": "歷史盤後",
+                        "股票代號": stock_id,
+                        "股票名稱": "查詢結果",
+                        "原始查詢日期": original_query_date.strftime("%Y%m%d"),
+                        "實際回傳日期": target_date.strftime("%Y%m%d"),
+                        "開盤": row[3],
+                        "最高": row[4],
+                        "最低": row[5],
+                        "收盤": row[6],
+                        "成交價": row[6],
+                        "成交量(張)": row[1],
+                    }
+                    if fallback_used:
+                        result["提示"] = (
+                            f"{original_query_date.strftime('%Y/%m/%d')} 無資料 ➜ 已回覆 {target_date.strftime('%Y/%m/%d')} 資料"
+                        )
+                    return result
+
+        fallback_used = True
+        target_date -= timedelta(days=1)
+
+    logger.warning(f"[TWSE 歷史] {date} 起往前 7 日查無資料")
+    return {
+        "error": f"{date} 起往前 7 日查無交易紀錄 ➜ 可能遇連假或尚未釋出資料"
+    }
