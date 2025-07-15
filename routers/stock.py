@@ -9,6 +9,9 @@ import asyncio
 from datetime import datetime, timedelta, time
 from typing import Optional, Union
 import httpx
+import requests
+from bs4 import BeautifulSoup
+
 
 router = APIRouter()
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
@@ -84,6 +87,38 @@ async def get_response_info(text: str):
             f"你剛說的是：{text}\n\n"
             "💡 指令範例：\n查詢 2330\n查詢 2330 20250715"
         )
+def get_goodinfo_data(stock_id: str):
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://goodinfo.tw"
+        }
+        url = f"https://goodinfo.tw/StockInfo/StockDetail.asp?STOCK_ID={stock_id}"
+        session = requests.Session()
+        response = session.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # 股票名稱解析
+        title = soup.title.string.strip()
+        stock_name = title.split("(")[0].strip() if "(" in title else "未知"
+
+        # 成交價解析
+        price_tag = soup.select_one("#divPriceDetail .bg_h1")
+        price = price_tag.text.strip() if price_tag else "查無"
+
+        logger.info(f"[Goodinfo Fallback] 股票={stock_id} ➜ 成交價={price}")
+        return {
+            "資料來源": "Goodinfo fallback",
+            "股票代號": stock_id,
+            "股票名稱": stock_name,
+            "成交價": price,
+            "開盤": "-",
+            "產業別": "N/A",
+            "提示": "📦 TWSE 資料異常 ➜ 回傳 Goodinfo 查詢結果"
+        }
+    except Exception as e:
+        logger.exception(f"[Goodinfo Fallback] 查詢失敗 ➜ {str(e)}")
+        return {"error": f"Goodinfo fallback 查詢失敗：{str(e)}"}        
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None):
     logger.info("🪛 DanielBot stock.py ➜ 已啟動 get_stock_info handler")
     logger.info(f"📦 傳入 stock_id={stock_id}, date={repr(date)}")
@@ -176,7 +211,10 @@ async def get_historical_data(stock_id: str, date: str):
                     logger.info(f"[TWSE 歷史] 回傳 JSON ➜ {data}")
                 except Exception as e:
                     logger.exception(f"[TWSE 歷史] JSON 解析錯誤 ➜ {str(e)}")
-                    return {"error": "TWSE 回傳格式錯誤 ➜ 可能為空資料或非法 JSON"}
+                    logger.info(f"[TWSE fallback] 啟動 Goodinfo fallback")
+                    return get_goodinfo_data(stock_id)                                  
+                  #  logger.exception(f"[TWSE 歷史] JSON 解析錯誤 ➜ {str(e)}")
+                  #  return {"error": "TWSE 回傳格式錯誤 ➜ 可能為空資料或非法 JSON"}
         except Exception as e:
             logger.exception(f"[TWSE 歷史] 呼叫失敗 ➜ {str(e)}")
             return {"error": f"TWSE 歷史資料取得失敗：{str(e)}"}
