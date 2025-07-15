@@ -155,24 +155,25 @@ async def get_historical_data(stock_id: str, date: str):
 
     for _ in range(retries):
         query_month = target_date.strftime("%Y%m")
-        query_day = f"{target_date.year}/{target_date.month}/{target_date.day}"
         url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={query_month}01&stockNo={stock_id}"
         headers = {
             "User-Agent": "Mozilla/5.0",
             "Referer": "https://www.twse.com.tw/"
         }
 
-        logger.info(f"📡 [TWSE 歷史] 查詢 ➜ stock_id={stock_id}, 月={query_month}, 日={query_day}")
+        logger.info(f"📡 [TWSE 歷史] 查詢 ➜ stock_id={stock_id}, 月={query_month}, 目標日={target_date.strftime('%Y/%m/%d')}")
 
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, headers=headers, timeout=10, follow_redirects=True)
                 logger.info(f"[TWSE 歷史] 回應狀態 ➜ {response.status_code}")
+                logger.info(f"[TWSE 歷史] Content-Type ➜ {response.headers.get('Content-Type', 'N/A')}")
+                raw_text = response.text
+                logger.info(f"[TWSE 歷史] 原始 response.text ➜ {raw_text[:300]}")
+
                 try:
-                    response_text = response.text
-                    logger.info(f"[TWSE 歷史] 原始 response.text ➜ {response_text[:200]}")
                     data = response.json()
-                    logger.info(f"[TWSE 歷史] 回傳 JSON：{data}")
+                    logger.info(f"[TWSE 歷史] 回傳 JSON ➜ {data}")
                 except Exception as e:
                     logger.exception(f"[TWSE 歷史] JSON 解析錯誤 ➜ {str(e)}")
                     return {"error": "TWSE 回傳格式錯誤 ➜ 可能為空資料或非法 JSON"}
@@ -180,8 +181,6 @@ async def get_historical_data(stock_id: str, date: str):
             logger.exception(f"[TWSE 歷史] 呼叫失敗 ➜ {str(e)}")
             return {"error": f"TWSE 歷史資料取得失敗：{str(e)}"}
 
-
-        # 將 target_date 轉成民國格式 ➜ 與 row[0] 比對
         twse_target_date = f"{target_date.year - 1911:03d}/{target_date.month:02d}/{target_date.day:02d}"
 
         for row in data.get("data", []):
