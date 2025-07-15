@@ -11,10 +11,8 @@ from typing import Optional, Union
 import httpx
 
 router = APIRouter()
-
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
-
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
@@ -24,7 +22,6 @@ logger.setLevel(logging.INFO)
 def is_twse_open():
     now = datetime.now().time()
     return time(9, 0) <= now <= time(13, 30)
-
 @router.post("/webhook")
 async def webhook(request: Request):
     body = await request.body()
@@ -50,9 +47,9 @@ def handle_text_message(event: MessageEvent):
         elif info.get("成交價") or info.get("收盤"):
             reply_text = (
                 f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
-                f"成交價：{info.get('成交價', info.get('收盤', '-'))} 元\n"
-                f"開盤：{info.get('開盤', '-')} 元\n"
-                f"產業別：{info.get('產業別', info.get('資料來源', '-'))}"
+                f"成交價：{info.get('成交價', info.get('收盤', '-') )} 元\n"
+                f"開盤：{info.get('開盤', '-') } 元\n"
+                f"產業別：{info.get('產業別', info.get('資料來源', '-') )}"
             )
             if info.get("提示"):
                 reply_text += f"\n💡 {info['提示']}"
@@ -88,7 +85,6 @@ async def get_response_info(text: str):
             f"你剛說的是：{text}\n\n"
             "💡 指令範例：\n查詢 2330\n查詢 2330 20250701"
         )
-
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None):
     logger.info("🪛 DanielBot stock.py ➜ 已啟動 get_stock_info handler")
     logger.info(f"📦 傳入 stock_id={stock_id}, date={repr(date)}")
@@ -151,7 +147,6 @@ async def get_realtime_data(stock_id: str):
         "開盤": info.get("o", ""),
         "產業別": info.get("ind", "N/A")
     }
-
 async def get_historical_data(stock_id: str, date: str):
     logger.info(f"📦 [TWSE 歷史] 進入歷史查詢 ➜ stock_id={stock_id}, date={date}")
     try:
@@ -170,4 +165,54 @@ async def get_historical_data(stock_id: str, date: str):
         url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={query_month}01&stockNo={stock_id}"
         headers = {
             "User-Agent": "Mozilla/5.0",
-            "Referer": "https://www.twse
+            "Referer": "https://www.twse.com.tw/"
+        }
+
+        logger.info(f"📡 [TWSE 歷史] 查詢 ➜ stock_id={stock_id}, 月={query_month}, 日={query_day}")
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, headers=headers, timeout=10, follow_redirects=True)
+                logger.info(f"[TWSE 歷史] 回應狀態 ➜ {response.status_code}")
+                try:
+                    data = response.json()
+                    logger.info(f"[TWSE 歷史] 回傳 JSON：{data}")
+                except Exception as je:
+                    logger.exception(f"[TWSE 歷史] JSON 解析錯誤 ➜ {str(je)}")
+                    return {"error": f"TWSE 歷史資料格式錯誤，請稍後再試"}
+        except Exception as e:
+            logger.exception(f"[TWSE 歷史] 呼叫失敗 ➜ {str(e)}")
+            return {"error": f"TWSE 歷史資料取得失敗：{str(e)}"}
+
+        available_dates = [row[0] for row in data.get("data", []) if isinstance(row, list) and row]
+        logger.info(f"[TWSE] {query_month} 資料日 ➜ {available_dates}")
+
+        for row in data.get("data", []):
+            if isinstance(row, list) and row and str(row[0]).startswith(query_day):
+                actual_data_date = target_date.strftime("%Y%m%d")
+                logger.info(f"[TWSE 歷史] 成交價 ➜ {row[6]} ➜ 資料日 ➜ {actual_data_date}")
+                result = {
+                    "資料來源": "歷史盤後",
+                    "股票代號": stock_id,
+                    "股票名稱": "查詢結果",
+                    "原始查詢日期": original_query_date.strftime("%Y%m%d"),
+                    "實際回傳日期": actual_data_date,
+                    "開盤": row[3],
+                    "最高": row[4],
+                    "最低": row[5],
+                    "收盤": row[6],
+                    "成交量(張)": row[1],
+                }
+                if fallback_used:
+                    result["提示"] = (
+                        f"{original_query_date.strftime('%Y/%m/%d')} 無資料 ➜ 已回覆 {target_date.strftime('%Y/%m/%d')} 資料"
+                    )
+                return result
+
+        fallback_used = True
+        target_date -= timedelta(days=1)
+
+    logger.warning(f"[TWSE 歷史] {date} 起往前 7 日查無資料")
+    return {
+        "error": f"{date} 起往前 7 日查無交易紀錄 ➜ 可能遇連假或尚未釋出資料"
+    }
