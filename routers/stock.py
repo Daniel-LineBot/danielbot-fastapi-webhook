@@ -111,6 +111,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
     logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{now_time} ➜ 模式：{mode}")
 
     if is_twse_open():
+        logger.info(f"[TWSE 即時查詢 debug] 回傳原始 JSON：{data}")
         return await get_realtime_data(stock_id)
     else:
         today = datetime.today().strftime("%Y%m%d")
@@ -118,6 +119,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         return await get_historical_data(stock_id, today)
 
 async def get_realtime_data(stock_id: str):
+    logger.info(f"[TWSE 即時查詢 debug] 回傳原始 JSON：{data}")
     url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{stock_id}.tw"
     headers = {
         "User-Agent": "Mozilla/5.0",
