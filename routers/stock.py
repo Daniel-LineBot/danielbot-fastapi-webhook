@@ -47,9 +47,9 @@ def handle_text_message(event: MessageEvent):
         elif info.get("成交價") or info.get("收盤"):
             reply_text = (
                 f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
-                f"成交價：{info.get('成交價', info.get('收盤', '-') )} 元\n"
-                f"開盤：{info.get('開盤', '-') } 元\n"
-                f"產業別：{info.get('產業別', info.get('資料來源', '-') )}"
+                f"成交價：{info.get('成交價', info.get('收盤', '-'))} 元\n"
+                f"開盤：{info.get('開盤', '-')} 元\n"
+                f"產業別：{info.get('產業別', info.get('資料來源', '-'))}"
             )
             if info.get("提示"):
                 reply_text += f"\n💡 {info['提示']}"
@@ -63,7 +63,6 @@ def handle_text_message(event: MessageEvent):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
-
 async def get_response_info(text: str):
     if text.startswith("查詢"):
         args = text.replace("查詢", "").strip().split()
@@ -107,7 +106,6 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         today = datetime.today().strftime("%Y%m%d")
         logger.info(f"[TWSE fallback] 市場已收盤 ➜ fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
-
 async def get_realtime_data(stock_id: str):
     url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{stock_id}.tw"
     headers = {
@@ -184,30 +182,36 @@ async def get_historical_data(stock_id: str, date: str):
             logger.exception(f"[TWSE 歷史] 呼叫失敗 ➜ {str(e)}")
             return {"error": f"TWSE 歷史資料取得失敗：{str(e)}"}
 
-        available_dates = [row[0] for row in data.get("data", []) if isinstance(row, list) and row]
-        logger.info(f"[TWSE] {query_month} 資料日 ➜ {available_dates}")
-
         for row in data.get("data", []):
-            if isinstance(row, list) and row and str(row[0]).startswith(query_day):
-                actual_data_date = target_date.strftime("%Y%m%d")
-                logger.info(f"[TWSE 歷史] 成交價 ➜ {row[6]} ➜ 資料日 ➜ {actual_data_date}")
-                result = {
-                    "資料來源": "歷史盤後",
-                    "股票代號": stock_id,
-                    "股票名稱": "查詢結果",
-                    "原始查詢日期": original_query_date.strftime("%Y%m%d"),
-                    "實際回傳日期": actual_data_date,
-                    "開盤": row[3],
-                    "最高": row[4],
-                    "最低": row[5],
-                    "收盤": row[6],
-                    "成交量(張)": row[1],
-                }
-                if fallback_used:
-                    result["提示"] = (
-                        f"{original_query_date.strftime('%Y/%m/%d')} 無資料 ➜ 已回覆 {target_date.strftime('%Y/%m/%d')} 資料"
-                    )
-                return result
+            if isinstance(row, list) and row and row[0]:
+                try:
+                    twse_date_str = str(row[0]).strip()
+                    year, month, day = map(int, twse_date_str.split("/"))
+                    western_date = datetime(year + 1911, month, day).strftime("%Y%m%d")
+                except Exception as e:
+                    logger.warning(f"[TWSE 日期轉換失敗] ➜ row[0]={twse_date_str} ➜ {str(e)}")
+                    continue
+
+                if western_date == target_date.strftime("%Y%m%d"):
+                    actual_data_date = western_date
+                    logger.info(f"[TWSE 歷史] 成交價 ➜ {row[6]} ➜ 資料日 ➜ {actual_data_date}")
+                    result = {
+                        "資料來源": "歷史盤後",
+                        "股票代號": stock_id,
+                        "股票名稱": "查詢結果",
+                        "原始查詢日期": original_query_date.strftime("%Y%m%d"),
+                        "實際回傳日期": actual_data_date,
+                        "開盤": row[3],
+                        "最高": row[4],
+                        "最低": row[5],
+                        "收盤": row[6],
+                        "成交量(張)": row[1],
+                    }
+                    if fallback_used:
+                        result["提示"] = (
+                            f"{original_query_date.strftime('%Y/%m/%d')} 無資料 ➜ 已回覆 {target_date.strftime('%Y/%m/%d')} 資料"
+                        )
+                    return result
 
         fallback_used = True
         target_date -= timedelta(days=1)
@@ -216,3 +220,5 @@ async def get_historical_data(stock_id: str, date: str):
     return {
         "error": f"{date} 起往前 7 日查無交易紀錄 ➜ 可能遇連假或尚未釋出資料"
     }
+
+.
