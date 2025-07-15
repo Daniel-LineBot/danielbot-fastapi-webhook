@@ -1,15 +1,12 @@
 fastapi
-uvicorn
-uvicorn[standard]
-line-bot-sdk==3.3.0
-aiohttp
-requests-html
-lxml_html_clean
-pydantic
-python-dotenv
-httpx
-httpx[http2]
-
+uvicorn[standard]         # 建議保留此版本即可，包含完整套件
+line-bot-sdk==3.3.0       # 使用 LINE Messaging API v3
+aiohttp                   # 給 line-bot-sdk v3 非同步使用
+httpx[http2]              # 用來抓 TWSE 網站即時/歷史報價
+requests-html             # 如果你未來要抓 Goodinfo 網頁
+lxml-html-clean           # 避免 HTML dirty tag 問題（配合上面）
+python-dotenv             # 載入 .env 變數
+pydantic                  # FastAPI 使用模型結構用
 
 
 
