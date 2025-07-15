@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Query
+from fastapi import APIRouter, Request
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.exceptions import InvalidSignatureError
@@ -49,7 +49,7 @@ def handle_text_message(event: MessageEvent):
                 f"📈 {info.get('股票名稱', '')}（{info.get('股票代號', '')}）\n"
                 f"成交價：{info.get('成交價', info.get('收盤', '-'))} 元\n"
                 f"開盤：{info.get('開盤', '-')} 元\n"
-                f"產業別：{info.get('產業別', info.get('資料來源', '-'))}"
+                f"產業別：{info.get('產業別', info.get('資料來源', '-') )}"
             )
             if info.get("提示"):
                 reply_text += f"\n💡 {info['提示']}"
@@ -72,7 +72,7 @@ async def get_response_info(text: str):
         if not re.fullmatch(r"\d{4}", stock_id):
             return "❗️請輸入正確的四位數股票代號，例如：查詢 2330"
         elif date and not re.fullmatch(r"\d{8}", date):
-            return "❗️日期格式錯誤，請使用 YYYYMMDD，例如：20250701"
+            return "❗️日期格式錯誤，請使用 YYYYMMDD，例如：20250715"
         else:
             if date:
                 datetime.strptime(date, "%Y%m%d")
@@ -82,7 +82,7 @@ async def get_response_info(text: str):
     else:
         return (
             f"你剛說的是：{text}\n\n"
-            "💡 指令範例：\n查詢 2330\n查詢 2330 20250701"
+            "💡 指令範例：\n查詢 2330\n查詢 2330 20250715"
         )
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None):
     logger.info("🪛 DanielBot stock.py ➜ 已啟動 get_stock_info handler")
@@ -119,12 +119,8 @@ async def get_realtime_data(stock_id: str):
         try:
             response = await client.get(url, headers=headers, timeout=10, follow_redirects=True)
             logger.info(f"[TWSE 即時] 回應狀態 ➜ {response.status_code}")
-            try:
-                data = response.json()
-                logger.info(f"[TWSE 即時] 回傳 JSON：{data}")
-            except Exception as je:
-                logger.exception(f"[TWSE 即時] 回傳無法解析 JSON ➜ {str(je)}")
-                return {"error": "TWSE 回傳格式錯誤，請稍後再試"}
+            data = response.json()
+            logger.info(f"[TWSE 即時] 回傳 JSON：{data}")
         except Exception as e:
             logger.exception(f"[TWSE 即時] 查詢失敗 ➜ {str(e)}")
             return {"error": "TWSE 即時查詢錯誤，請稍後重試"}
@@ -172,12 +168,8 @@ async def get_historical_data(stock_id: str, date: str):
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, headers=headers, timeout=10, follow_redirects=True)
                 logger.info(f"[TWSE 歷史] 回應狀態 ➜ {response.status_code}")
-                try:
-                    data = response.json()
-                    logger.info(f"[TWSE 歷史] 回傳 JSON：{data}")
-                except Exception as je:
-                    logger.exception(f"[TWSE 歷史] JSON 解析錯誤 ➜ {str(je)}")
-                    return {"error": f"TWSE 歷史資料格式錯誤，請稍後再試"}
+                data = response.json()
+                logger.info(f"[TWSE 歷史] 回傳 JSON：{data}")
         except Exception as e:
             logger.exception(f"[TWSE 歷史] 呼叫失敗 ➜ {str(e)}")
             return {"error": f"TWSE 歷史資料取得失敗：{str(e)}"}
@@ -186,39 +178,4 @@ async def get_historical_data(stock_id: str, date: str):
             if isinstance(row, list) and row and row[0]:
                 try:
                     twse_date_str = str(row[0]).strip()
-                    year, month, day = map(int, twse_date_str.split("/"))
-                    western_date = datetime(year + 1911, month, day).strftime("%Y%m%d")
-                except Exception as e:
-                    logger.warning(f"[TWSE 日期轉換失敗] ➜ row[0]={twse_date_str} ➜ {str(e)}")
-                    continue
-
-                if western_date == target_date.strftime("%Y%m%d"):
-                    actual_data_date = western_date
-                    logger.info(f"[TWSE 歷史] 成交價 ➜ {row[6]} ➜ 資料日 ➜ {actual_data_date}")
-                    result = {
-                        "資料來源": "歷史盤後",
-                        "股票代號": stock_id,
-                        "股票名稱": "查詢結果",
-                        "原始查詢日期": original_query_date.strftime("%Y%m%d"),
-                        "實際回傳日期": actual_data_date,
-                        "開盤": row[3],
-                        "最高": row[4],
-                        "最低": row[5],
-                        "收盤": row[6],
-                        "成交量(張)": row[1],
-                    }
-                    if fallback_used:
-                        result["提示"] = (
-                            f"{original_query_date.strftime('%Y/%m/%d')} 無資料 ➜ 已回覆 {target_date.strftime('%Y/%m/%d')} 資料"
-                        )
-                    return result
-
-        fallback_used = True
-        target_date -= timedelta(days=1)
-
-    logger.warning(f"[TWSE 歷史] {date} 起往前 7 日查無資料")
-    return {
-        "error": f"{date} 起往前 7 日查無交易紀錄 ➜ 可能遇連假或尚未釋出資料"
-    }
-
-.
+                    if re.fullmatch(r"\d{3}/\d{2}/\d{2}", twse_date_str):
