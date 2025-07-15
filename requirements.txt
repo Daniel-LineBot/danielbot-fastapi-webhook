@@ -8,6 +8,7 @@ lxml_html_clean
 pydantic
 python-dotenv
 httpx
+httpx[http2]
 
 
 
