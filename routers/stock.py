@@ -22,6 +22,7 @@ logger.setLevel(logging.INFO)
 def is_twse_open():
     now = datetime.now().time()
     return time(9, 0) <= now <= time(13, 30)
+
 @router.post("/webhook")
 async def webhook(request: Request):
     body = await request.body()
@@ -63,6 +64,7 @@ def handle_text_message(event: MessageEvent):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
+
 async def get_response_info(text: str):
     if text.startswith("查詢"):
         args = text.replace("查詢", "").strip().split()
@@ -84,6 +86,7 @@ async def get_response_info(text: str):
             f"你剛說的是：{text}\n\n"
             "💡 指令範例：\n查詢 2330\n查詢 2330 20250715"
         )
+
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None):
     logger.info("🪛 DanielBot stock.py ➜ 已啟動 get_stock_info handler")
     logger.info(f"📦 傳入 stock_id={stock_id}, date={repr(date)}")
@@ -106,6 +109,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         today = datetime.today().strftime("%Y%m%d")
         logger.info(f"[TWSE fallback] 市場已收盤 ➜ fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
+
 async def get_realtime_data(stock_id: str):
     url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{stock_id}.tw"
     headers = {
@@ -141,6 +145,7 @@ async def get_realtime_data(stock_id: str):
         "開盤": info.get("o", ""),
         "產業別": info.get("ind", "N/A")
     }
+
 async def get_historical_data(stock_id: str, date: str):
     logger.info(f"📦 [TWSE 歷史] 進入歷史查詢 ➜ stock_id={stock_id}, date={date}")
     try:
@@ -166,16 +171,5 @@ async def get_historical_data(stock_id: str, date: str):
 
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(url, headers=headers, timeout=10, follow_redirects=True)
-                logger.info(f"[TWSE 歷史] 回應狀態 ➜ {response.status_code}")
-                data = response.json()
-                logger.info(f"[TWSE 歷史] 回傳 JSON：{data}")
-        except Exception as e:
-            logger.exception(f"[TWSE 歷史] 呼叫失敗 ➜ {str(e)}")
-            return {"error": f"TWSE 歷史資料取得失敗：{str(e)}"}
+                response = await client.get(url, headers=headers
 
-        for row in data.get("data", []):
-            if isinstance(row, list) and row and row[0]:
-                try:
-                    twse_date_str = str(row[0]).strip()
-                    if re.fullmatch(r"\d{3}/\d{2}/\d{2}", twse_date_str):
