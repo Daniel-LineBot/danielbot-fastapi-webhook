@@ -91,6 +91,8 @@ async def process_event(event: MessageEvent):
         )
 
     try:
+        logger.info(f"✅ 準備回覆 LINE ➜ token={event.reply_token}, text={reply_text}")
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+        logger.info(f"✅ 準備回覆 LINE ➜ token={event.reply_token}, text={reply_text}")
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
