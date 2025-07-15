@@ -7,6 +7,8 @@ requests-html             # 如果你未來要抓 Goodinfo 網頁
 lxml-html-clean           # 避免 HTML dirty tag 問題（配合上面）
 python-dotenv             # 載入 .env 變數
 pydantic                  # FastAPI 使用模型結構用
+requests>=2.31.0
+beautifulsoup4>=4.12.2
 
 
 
