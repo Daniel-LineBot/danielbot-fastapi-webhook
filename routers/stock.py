@@ -38,9 +38,9 @@ async def webhook(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
-    text_raw = event.message.text
-    text = event.message.text.strip().replace(" ", "")
-    logger.info(f"[Webhook Text] 使用者輸入 ➜ {repr(text)}")
+    text_raw = event.message.text.strip()
+    text = text_raw.replace(" ", "")
+    logger.info(f"[Webhook Text] 原始 ➜ {repr(text_raw)} ➜ 清理後 ➜ {repr(text)}")
     if text.startswith("配息"):
         stock_id = text.replace("配息", "").strip()
         result = get_dividend_info(stock_id)
