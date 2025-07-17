@@ -11,6 +11,7 @@ from typing import Optional, Union
 import httpx
 import requests
 from bs4 import BeautifulSoup
+from dividend import get_dividend_info
 
 
 router = APIRouter()
