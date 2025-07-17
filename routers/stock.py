@@ -41,8 +41,10 @@ def handle_text_message(event: MessageEvent):
     text_raw = event.message.text.strip()
     text = text_raw.replace(" ", "")
     logger.info(f"[Webhook Text] 原始 ➜ {repr(text_raw)} ➜ 清理後 ➜ {repr(text)}")
-    if text.startswith("配息"):
-        stock_id = text.replace("配息", "").strip()
+    logger.info(f"[配息判斷] 是否命中 ➜ {bool(re.match(r'^配息\d{4}$', text))}")
+
+    if re.match(r"^配息\d{4}$", text):
+        stock_id = re.sub(r"[^\d]", "", text)
         result = get_dividend_info(stock_id)
         if result.get("error"):
             reply_text = f"⚠️ {result['error']}"
@@ -58,11 +60,12 @@ def handle_text_message(event: MessageEvent):
                 f"💡 {result['提示']}"
             )
         try:
+            logger.info(f"[LINE回覆] ➜ {repr(reply_text)}")
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
         except Exception as e:
             logger.exception(f"📛 回覆配息訊息失敗：{str(e)}")
-        return
-    
+        return  # 結束 callback，不再落回 fallback
+
     reply_text = ""
 
     try:
