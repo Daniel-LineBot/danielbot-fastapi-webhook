@@ -43,7 +43,6 @@ def handle_text_message(event: MessageEvent):
     logger.info(f"[Webhook Text] 原始 ➜ {repr(text_raw)} ➜ 清理後 ➜ {repr(text)}")
     is_match = bool(re.match(r'^配息\d{4}$', text))
     logger.info(f"[配息判斷] 是否命中 ➜ {is_match}")
-
     if re.match(r"^配息\d{4}$", text):
         stock_id = re.sub(r"[^\d]", "", text)
         result = get_dividend_info(stock_id)
