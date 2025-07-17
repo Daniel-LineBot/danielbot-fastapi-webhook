@@ -182,7 +182,9 @@ def get_dividend_info(stock_id: str):
 
     rows = table.select("tr")[1:]
     latest_row = None
-    this_year = str(datetime.datetime.now().year)
+    #this_year = str(datetime.datetime.now().year)
+    this_year = str(datetime.now().year)
+    logger.info(f"[配息查詢] 股票={stock_id} ➜ 年度={this_year}")
     note = ""
 
     for row in rows:
