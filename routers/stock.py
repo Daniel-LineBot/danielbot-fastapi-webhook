@@ -141,11 +141,7 @@ def get_goodinfo_data(stock_id: str):
     except Exception as e:
         logger.exception(f"[Goodinfo Fallback] 查詢失敗 ➜ {str(e)}")
         return {"error": f"Goodinfo fallback 查詢失敗：{str(e)}"}        
- def get_dividend_info(stock_id: str):
-    import requests
-    from bs4 import BeautifulSoup
-    import datetime
-
+def get_dividend_info(stock_id: str):
     url = f"https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID={stock_id}&STEP=DATA"
     headers = {
         "user-agent": "Mozilla/5.0",
@@ -158,29 +154,27 @@ def get_goodinfo_data(stock_id: str):
     except Exception as e:
         return {"error": f"無法連線到 Goodinfo：{str(e)}"}
 
-    table = (
-        soup.select_one("table.b1.p4_2.r10.box_shadow") or
-        soup.select_one("table.b1.p4_2.r10")
-    )
+    table = soup.select_one("table.b1.p4_2.r10.box_shadow") or soup.select_one("table.b1.p4_2.r10")
     if not table:
         return {"error": f"查無 {stock_id} 的配息表格，可能網站結構已變"}
 
     rows = table.select("tr")[1:]
     latest_row = None
     this_year = str(datetime.datetime.now().year)
+    note = ""
 
     for row in rows:
         cols = [td.get_text(strip=True) for td in row.select("td")]
         if len(cols) >= 10 and cols[0].startswith(this_year):
             latest_row = cols
+            note = "查詢成功"
             break
 
     if not latest_row and rows:
         latest_row = [td.get_text(strip=True) for td in rows[0].select("td")]
         note = "查無今年資料，回傳最近一筆紀錄"
-    elif latest_row:
-        note = "查詢成功"
-    else:
+
+    if not latest_row:
         return {"error": "找不到任何可用的配息資料"}
 
     return {
@@ -193,7 +187,7 @@ def get_goodinfo_data(stock_id: str):
         "來源": latest_row[8],
         "公告來源": "Goodinfo",
         "提示": note
-    }     
+    }
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None):
     logger.info("🪛 DanielBot stock.py ➜ 已啟動 get_stock_info handler")
     logger.info(f"📦 傳入 stock_id={stock_id}, date={repr(date)}")
