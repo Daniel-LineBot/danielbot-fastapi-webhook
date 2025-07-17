@@ -38,34 +38,7 @@ async def webhook(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
-    text_raw = event.message.text.strip()
-    text = text_raw.replace(" ", "")
-    logger.info(f"[Webhook Text] 原始 ➜ {repr(text_raw)} ➜ 清理後 ➜ {repr(text)}")
-    is_match = bool(re.match(r'^配息\d{4}$', text))
-    logger.info(f"[配息判斷] 是否命中 ➜ {is_match}")
-    if is_match:
-        stock_id = re.sub(r"[^\d]", "", text)
-        result = get_dividend_info(stock_id)
-        if result.get("error"):
-            reply_text = f"⚠️ {result['error']}"
-        else:
-            reply_text = (
-                f"📦 {result['股票代號']} 配息資訊\n"
-                f"年度：{result['配息年度']}\n"
-                f"除權息日：{result['除權息日']}\n"
-                f"現金股利：{result['現金股利']} 元\n"
-                f"股票股利：{result['股票股利']} 股\n"
-                f"發放日：{result['發放日']}\n"
-                f"來源：{result['公告來源']}（{result['來源']}）\n"
-                f"💡 {result['提示']}"
-            )
-        try:
-            logger.info(f"[LINE回覆] ➜ {repr(reply_text)}")
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
-        except Exception as e:
-            logger.exception(f"📛 回覆配息訊息失敗：{str(e)}")
-        return  # ✅ 記得回傳，避免掉回 fallback！
-    
+    text = event.message.text.strip()
     reply_text = ""
 
     try:
@@ -94,28 +67,6 @@ def handle_text_message(event: MessageEvent):
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
 async def get_response_info(text: str):
-    if text.startswith("配息"):
-        stock_id = text.replace("配息", "").strip()
-        result = get_dividend_info(stock_id)
-        if result.get("error"):
-            reply_text = f"⚠️ {result['error']}"
-        else:
-            reply_text = (
-                f"📦 {result['股票代號']} 配息資訊\n"
-                f"年度：{result['配息年度']}\n"
-                f"除權息日：{result['除權息日']}\n"
-                f"現金股利：{result['現金股利']} 元\n"
-                f"股票股利：{result['股票股利']} 股\n"
-                f"發放日：{result['發放日']}\n"
-                f"來源：{result['公告來源']}（{result['來源']}）\n"
-                f"💡 {result['提示']}"
-            )
-        try:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
-        except Exception as e:
-            logger.exception(f"📛 回覆配息訊息失敗：{str(e)}")
-        return
-    
     if text.startswith("查詢"):
         args = text.replace("查詢", "").strip().split()
         stock_id = args[0] if len(args) >= 1 else ""
@@ -168,55 +119,6 @@ def get_goodinfo_data(stock_id: str):
     except Exception as e:
         logger.exception(f"[Goodinfo Fallback] 查詢失敗 ➜ {str(e)}")
         return {"error": f"Goodinfo fallback 查詢失敗：{str(e)}"}        
-def get_dividend_info(stock_id: str):
-    url = f"https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID={stock_id}&STEP=DATA"
-    headers = {
-        "user-agent": "Mozilla/5.0",
-        "referer": "https://goodinfo.tw/"
-    }
-
-    try:
-        r = requests.get(url, headers=headers, timeout=10)
-        soup = BeautifulSoup(r.text, "html.parser")
-    except Exception as e:
-        return {"error": f"無法連線到 Goodinfo：{str(e)}"}
-
-    table = soup.select_one("table.b1.p4_2.r10.box_shadow") or soup.select_one("table.b1.p4_2.r10")
-    if not table:
-        return {"error": f"查無 {stock_id} 的配息表格，可能網站結構已變"}
-
-    rows = table.select("tr")[1:]
-    latest_row = None
-    #this_year = str(datetime.datetime.now().year)
-    this_year = str(datetime.now().year)
-    logger.info(f"[配息查詢] 股票={stock_id} ➜ 年度={this_year}")
-    note = ""
-
-    for row in rows:
-        cols = [td.get_text(strip=True) for td in row.select("td")]
-        if len(cols) >= 10 and cols[0].startswith(this_year):
-            latest_row = cols
-            note = "查詢成功"
-            break
-
-    if not latest_row and rows:
-        latest_row = [td.get_text(strip=True) for td in rows[0].select("td")]
-        note = "查無今年資料，回傳最近一筆紀錄"
-
-    if not latest_row:
-        return {"error": "找不到任何可用的配息資料"}
-
-    return {
-        "股票代號": stock_id,
-        "配息年度": latest_row[0],
-        "除權息日": latest_row[3],
-        "現金股利": latest_row[4],
-        "股票股利": latest_row[5],
-        "發放日": latest_row[6],
-        "來源": latest_row[8],
-        "公告來源": "Goodinfo",
-        "提示": note
-    }
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None):
     logger.info("🪛 DanielBot stock.py ➜ 已啟動 get_stock_info handler")
     logger.info(f"📦 傳入 stock_id={stock_id}, date={repr(date)}")
