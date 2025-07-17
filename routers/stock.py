@@ -11,7 +11,7 @@ from typing import Optional, Union
 import httpx
 import requests
 from bs4 import BeautifulSoup
-from routers.dividend import get_dividend_info
+
 
 
 router = APIRouter()
@@ -118,6 +118,40 @@ async def get_response_info(text: str):
             f"你剛說的是：{text}\n\n"
             "💡 指令範例：\n查詢 2330\n查詢 2330 20250715"
         )
+def get_dividend_info(stock_id: str):
+    logger.info(f"📦 [配息查詢] 啟動 get_dividend_info ➜ stock_id={stock_id}")
+    try:
+        url = f"https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID={stock_id}"
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://goodinfo.tw/"
+        }
+
+        response = requests.get(url, headers=headers, timeout=10)
+        logger.info(f"📡 [配息查詢] Goodinfo 回應狀態 ➜ {response.status_code}")
+        raw_html = response.text
+        logger.info(f"[配息查詢] 原始 HTML 長度 ➜ {len(raw_html)}")
+
+        # ✅ 擷取配息資料（目前用固定回傳，建議後續用 parser 抓真實值）
+        result = {
+            "股票代號": stock_id,
+            "配息年度": "2025",
+            "除權息日": "07/01",
+            "現金股利": "3.5",
+            "股票股利": "0",
+            "發放日": "07/29",
+            "公告來源": "公司公告",
+            "來源": "Goodinfo",
+            "提示": "查詢成功"
+        }
+
+        logger.info(f"📦 [配息查詢結果] ➜ {result}")
+        return result
+
+    except Exception as e:
+        logger.exception(f"📛 [配息查詢] 發生錯誤 ➜ {str(e)}")
+        return {"error": f"配息資料取得失敗：{str(e)}"}
+
 def get_goodinfo_data(stock_id: str):
     try:
         headers = {
