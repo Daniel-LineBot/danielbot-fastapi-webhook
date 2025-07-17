@@ -38,9 +38,37 @@ async def webhook(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
-    text = event.message.text.strip()
-    reply_text = ""
+    text_raw = event.message.text.strip()
+    text = text_raw.replace(" ", "")
+    logger.info(f"[Webhook Text] 原始 ➜ {repr(text_raw)} ➜ 清理後 ➜ {repr(text)}")
 
+    # ✅ 配息模組優先判斷
+    if re.match(r"^配息\d{4}$", text):
+        stock_id = re.sub(r"[^\d]", "", text)
+        result = get_dividend_info(stock_id)
+        if result.get("error"):
+            reply_text = f"⚠️ {result['error']}"
+        else:
+            reply_text = (
+                f"📦 {result['股票代號']} 配息資訊\n"
+                f"年度：{result['配息年度']}\n"
+                f"除權息日：{result['除權息日']}\n"
+                f"現金股利：{result['現金股利']} 元\n"
+                f"股票股利：{result['股票股利']} 股\n"
+                f"發放日：{result['發放日']}\n"
+                f"來源：{result['公告來源']}（{result['來源']}）\n"
+                f"💡 {result['提示']}"
+            )
+        try:
+            logger.info(f"[LINE回覆] ➜ {repr(reply_text)}")
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+        except Exception as e:
+            logger.exception(f"📛 回覆配息訊息失敗：{str(e)}")
+        return  # ⛔️ 記得 return，避免進入查股 fallback
+
+    # 📈 查股模組 ➜ 用你現有的查詢邏輯接在後面即可
+    text = text_raw  # 你原本的查股模組就吃未清理的 text_raw
+    reply_text = ""
     try:
         info = asyncio.run(get_response_info(text))
         if isinstance(info, str):
