@@ -38,7 +38,6 @@ async def webhook(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
-    text = event.message.text.strip()
     text = event.message.text.strip().replace(" ", "")
     logger.info(f"[Webhook Text] 使用者輸入 ➜ {repr(text)}")
     if text.startswith("配息"):
