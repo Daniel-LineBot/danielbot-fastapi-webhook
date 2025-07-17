@@ -44,9 +44,11 @@ def handle_text_message(event: MessageEvent):
     logger.info(f"[Webhook Text] 原始 ➜ {repr(text_raw)} ➜ 清理後 ➜ {repr(text)}")
 
     # ✅ 配息模組優先判斷
-    if re.match(r"^配息\d{4}$", text):
-        stock_id = re.sub(r"[^\d]", "", text)
-        result = get_dividend_info(stock_id)
+        if re.match(r"^配息\s?\d{4}$", text):
+            stock_id = re.sub(r"[^\d]", "", text)
+            logger.info(f"[指令判斷] 命中配息指令 ➜ stock_id={stock_id}")
+            result = get_dividend_info(stock_id)
+            logger.info(f"[配息查詢] 回傳結果 ➜ {result}")
         if result.get("error"):
             reply_text = f"⚠️ {result['error']}"
         else:
