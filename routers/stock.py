@@ -41,7 +41,8 @@ def handle_text_message(event: MessageEvent):
     text_raw = event.message.text.strip()
     text = text_raw.replace(" ", "")
     logger.info(f"[Webhook Text] 原始 ➜ {repr(text_raw)} ➜ 清理後 ➜ {repr(text)}")
-    logger.info(f"[配息判斷] 是否命中 ➜ {bool(re.match(r'^配息\d{4}$', text))}")
+    is_match = bool(re.match(r'^配息\d{4}$', text))
+    logger.info(f"[配息判斷] 是否命中 ➜ {is_match}")
 
     if re.match(r"^配息\d{4}$", text):
         stock_id = re.sub(r"[^\d]", "", text)
