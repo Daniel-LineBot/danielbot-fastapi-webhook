@@ -39,6 +39,28 @@ async def webhook(request: Request):
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
     text = event.message.text.strip()
+    if text.startswith("配息"):
+        stock_id = text.replace("配息", "").strip()
+        result = get_dividend_info(stock_id)
+        if result.get("error"):
+            reply_text = f"⚠️ {result['error']}"
+        else:
+            reply_text = (
+                f"📦 {result['股票代號']} 配息資訊\n"
+                f"年度：{result['配息年度']}\n"
+                f"除權息日：{result['除權息日']}\n"
+                f"現金股利：{result['現金股利']} 元\n"
+                f"股票股利：{result['股票股利']} 股\n"
+                f"發放日：{result['發放日']}\n"
+                f"來源：{result['公告來源']}（{result['來源']}）\n"
+                f"💡 {result['提示']}"
+            )
+        try:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+        except Exception as e:
+            logger.exception(f"📛 回覆配息訊息失敗：{str(e)}")
+        return
+    
     reply_text = ""
 
     try:
