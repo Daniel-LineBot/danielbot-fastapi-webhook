@@ -324,9 +324,13 @@ def get_dividend_info(stock_id: str):
         note = "查詢成功"
     else:
         return {"error": "找不到任何可用的配息資料"}
-
+        
+    # 如果你已經在 stock.py，可直接呼叫自己內部函式
+    stock_info = get_stock_info(stock_id)
+    stock_name = stock_info.get("股票名稱", "N/A")
     return {
         "股票代號": stock_id,
+        "股票名稱": stock_name,  ✅ 才能讓 callback 顯示正常的名稱
         "配息年度": latest_row[0],
         "除權息日": latest_row[3],
         "現金股利": latest_row[4],
