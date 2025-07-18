@@ -1,5 +1,6 @@
 __version__ = "2025.07.18"
 from datetime import datetime, timezone, timedelta, time
+from loguru import logger
 
 def get_tw_time():
     """回傳台灣時區的 datetime.now()"""
