@@ -1,15 +1,5 @@
+__version__ = "2025.07.18"
 from datetime import datetime, timezone, timedelta, time
-__all__ = [
-    "get_tw_time",
-    "get_tw_time_str",
-    "get_tw_hour",
-    "is_open_twse",
-    "get_tw_daypart",
-    "is_market_open",
-    "twse_open_range",
-    "twse_status",
-    "fallback_trace"
-]
 
 def get_tw_time():
     """回傳台灣時區的 datetime.now()"""
@@ -85,4 +75,27 @@ def fallback_trace():
     """自動 logs 判斷 fallback 模式與台股狀態"""
     status = twse_status()
     logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{status['now']} ➜ 模式：{status['mode']}")
+
+
+# 動態產生 __all__（開發時使用 ➜ 可列印出 def 清單）
+def get_all_exports():
+    import inspect
+    this_module = inspect.getmodule(inspect.currentframe())
+    return [
+        name for name, obj in vars(this_module).items()
+        if inspect.isfunction(obj) and not name.startswith("_")
+    ]
+
+# ✅ 最終輸出 ➜ 你可以 print(get_all_exports()) 或直接複製結果
+__all__ = [
+    "get_tw_time",
+    "get_tw_time_str",
+    "get_tw_hour",
+    "is_open_twse",
+    "get_tw_daypart",
+    "is_market_open",
+    "twse_open_range",
+    "twse_status",
+    "fallback_trace"
+]
 
