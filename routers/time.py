@@ -32,3 +32,19 @@ def get_tw_daypart():
         return "盤中"
     else:
         return "盤後"
+        
+def is_market_open(market: str = "twse") -> bool:
+    """判斷指定市場是否開盤中，目前支援 twse 台股"""
+    now = get_tw_time().time()
+
+    if market.lower() == "twse":
+        start, end = twse_open_range()
+        return start <= now <= end
+
+    # 未支援市場 ➜ 預設為 False
+    return False
+    
+def twse_open_range():
+    """回傳台股交易時段起訖時間（time物件）"""
+    return time(9, 0), time(13, 30)
+    
