@@ -38,37 +38,9 @@ async def webhook(request: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
-    text_raw = event.message.text.strip()
-    text = text_raw.replace(" ", "")
-    logger.info(f"[Webhook Text] 原始 ➜ {repr(text_raw)} ➜ 清理後 ➜ {repr(text)}")
-
-    # ✅ 配息模組優先判斷
-    if re.match(r"^配息\d{4}$", text):
-        stock_id = re.sub(r"[^\d]", "", text)
-        result = get_dividend_info(stock_id)
-        if result.get("error"):
-            reply_text = f"⚠️ {result['error']}"
-        else:
-            reply_text = (
-                f"📦 {result['股票代號']} 配息資訊\n"
-                f"年度：{result['配息年度']}\n"
-                f"除權息日：{result['除權息日']}\n"
-                f"現金股利：{result['現金股利']} 元\n"
-                f"股票股利：{result['股票股利']} 股\n"
-                f"發放日：{result['發放日']}\n"
-                f"來源：{result['公告來源']}（{result['來源']}）\n"
-                f"💡 {result['提示']}"
-            )
-        try:
-            logger.info(f"[LINE回覆] ➜ {repr(reply_text)}")
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
-        except Exception as e:
-            logger.exception(f"📛 回覆配息訊息失敗：{str(e)}")
-        return  # ⛔️ 記得 return，避免進入查股 fallback
-
-    # 📈 查股模組 ➜ 用你現有的查詢邏輯接在後面即可
-    text = text_raw  # 你原本的查股模組就吃未清理的 text_raw
+    text = event.message.text.strip()
     reply_text = ""
+
     try:
         info = asyncio.run(get_response_info(text))
         if isinstance(info, str):
@@ -206,7 +178,6 @@ async def get_realtime_data(stock_id: str):
     }
 async def get_historical_data(stock_id: str, date: str):
     logger.info(f"📦 [TWSE 歷史] 進入歷史查詢 ➜ stock_id={stock_id}, date={date}")
-
     try:
         original_query_date = datetime.strptime(str(date), "%Y%m%d")
     except ValueError:
@@ -222,8 +193,7 @@ async def get_historical_data(stock_id: str, date: str):
         url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={query_month}01&stockNo={stock_id}"
         headers = {
             "User-Agent": "Mozilla/5.0",
-            "Referer": "https://www.twse.com.tw/",
-            "Accept": "application/json"
+            "Referer": "https://www.twse.com.tw/"
         }
 
         logger.info(f"📡 [TWSE 歷史] 查詢 ➜ stock_id={stock_id}, 月={query_month}, 目標日={target_date.strftime('%Y/%m/%d')}")
@@ -231,26 +201,20 @@ async def get_historical_data(stock_id: str, date: str):
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(url, headers=headers, timeout=10, follow_redirects=True)
-
                 logger.info(f"[TWSE 歷史] 回應狀態 ➜ {response.status_code}")
-                content_type = response.headers.get("Content-Type", "N/A")
-                logger.info(f"[TWSE 歷史] Content-Type ➜ {content_type}")
+                logger.info(f"[TWSE 歷史] Content-Type ➜ {response.headers.get('Content-Type', 'N/A')}")
                 raw_text = response.text
                 logger.info(f"[TWSE 歷史] 原始 response.text ➜ {raw_text[:300]}")
 
-                if response.status_code == 200 and "application/json" in content_type:
-                    try:
-                        data = response.json()
-                        logger.info(f"[TWSE 歷史] 回傳 JSON ➜ {data}")
-                    except Exception as e:
-                        logger.exception(f"[TWSE 歷史] JSON 解析錯誤 ➜ {str(e)}")
-                        logger.info(f"[TWSE fallback] 啟動 Goodinfo fallback")
-                        return get_goodinfo_data(stock_id)
-                else:
-                    logger.warning(f"[TWSE 歷史] 非 JSON 回應 ➜ Content-Type = {content_type}")
+                try:
+                    data = response.json()
+                    logger.info(f"[TWSE 歷史] 回傳 JSON ➜ {data}")
+                except Exception as e:
+                    logger.exception(f"[TWSE 歷史] JSON 解析錯誤 ➜ {str(e)}")
                     logger.info(f"[TWSE fallback] 啟動 Goodinfo fallback")
-                    return get_goodinfo_data(stock_id)
-
+                    return get_goodinfo_data(stock_id)                                  
+                  #  logger.exception(f"[TWSE 歷史] JSON 解析錯誤 ➜ {str(e)}")
+                  #  return {"error": "TWSE 回傳格式錯誤 ➜ 可能為空資料或非法 JSON"}
         except Exception as e:
             logger.exception(f"[TWSE 歷史] 呼叫失敗 ➜ {str(e)}")
             return {"error": f"TWSE 歷史資料取得失敗：{str(e)}"}
@@ -276,7 +240,9 @@ async def get_historical_data(stock_id: str, date: str):
                         "成交量(張)": row[1],
                     }
                     if fallback_used:
-                        result["提示"] = f"{original_query_date.strftime('%Y/%m/%d')} 無資料 ➜ 已回覆 {target_date.strftime('%Y/%m/%d')} 資料"
+                        result["提示"] = (
+                            f"{original_query_date.strftime('%Y/%m/%d')} 無資料 ➜ 已回覆 {target_date.strftime('%Y/%m/%d')} 資料"
+                        )
                     return result
 
         fallback_used = True
