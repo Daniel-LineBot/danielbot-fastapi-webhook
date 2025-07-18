@@ -185,9 +185,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         return await get_realtime_data(stock_id)
     else:
         today = get_tw_time_str()
-       #today = datetime.today().strftime("%Y%m%d") #20250718 del
-     
-         
+       #today = datetime.today().strftime("%Y%m%d") #20250718 del       
      
         logger.info(f"[TWSE fallback] 市場已收盤 ➜ fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
