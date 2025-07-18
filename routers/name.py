@@ -3,6 +3,63 @@ from routers.twse import get_twse_name
 from routers.goodinfo import get_goodinfo_name
 from routers.mock_stock import get_mock_name
 
+from routers.stock import get_stock_info
+from routers.twse import get_twse_industry
+from routers.goodinfo import get_goodinfo_industry
+from routers.mock_stock import get_mock_industry
+
+async def get_stock_profile(text: str, source: str = "twse") -> dict:
+    """
+    一鍵查詢 ➜ 股票代碼、名稱、產業、目前成交價（用 callback 主幹查）
+    """
+    identity = get_stock_identity(text, source)
+    stock_id = identity["id"]
+    name = identity["name"]
+
+    if stock_id == "查無":
+        return {"id": "查無", "name": "查無", "industry": "查無", "price": "查無"}
+
+    # 查產業分類
+    if source == "twse":
+        industry = get_twse_industry(stock_id)
+    elif source == "goodinfo":
+        industry = get_goodinfo_industry(stock_id)
+    elif source == "mock":
+        industry = get_mock_industry(stock_id)
+    else:
+        industry = "未知"
+
+    # 查目前價格（fallback 啟用）
+    result = await get_stock_info(stock_id)
+    price = result.get("price", "查無")
+
+    return {
+        "id": stock_id,
+        "name": name,
+        "industry": industry,
+        "price": price
+    }
+async def resolve_stock_input(text: str) -> dict:
+    """
+    智能解析使用者輸入 ➜ 自動選來源查詢
+    優先順序：TWSE ➜ fallback Goodinfo ➜ mock
+    """
+    info = await get_stock_profile(text, source="twse")
+    if info["price"] != "查無":
+        info["source"] = "twse"
+        return info
+
+    # fallback ➜ goodinfo
+    info = await get_stock_profile(text, source="goodinfo")
+    if info["price"] != "查無":
+        info["source"] = "goodinfo"
+        return info
+
+    # fallback ➜ mock
+    info = await get_stock_profile(text, source="mock")
+    info["source"] = "mock"
+    return info
+
 def get_stock_identity(text: str, source: str = "twse") -> dict:
     """
     自動判斷輸入是代碼還是名稱 ➜ 回傳 {id, name}
