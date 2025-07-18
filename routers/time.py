@@ -47,4 +47,27 @@ def is_market_open(market: str = "twse") -> bool:
 def twse_open_range():
     """回傳台股交易時段起訖時間（time物件）"""
     return time(9, 0), time(13, 30)
-    
+
+def twse_status() -> dict:
+    """台股交易狀態 ➜ 回傳 dict 包含 is_open, now, mode 字段"""
+    now = get_tw_time()
+    now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    t = now.time()
+    start, end = twse_open_range()
+
+    is_open = start <= t <= end
+    if now.weekday() >= 5:
+        mode = "非交易日"
+    elif t < start:
+        mode = "盤前"
+    elif is_open:
+        mode = "盤中"
+    else:
+        mode = "盤後"
+
+    return {
+        "is_open": is_open,
+        "now": now_str,
+        "mode": mode
+    }
+
