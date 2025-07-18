@@ -11,7 +11,7 @@ from typing import Optional, Union
 import httpx
 import requests
 from bs4 import BeautifulSoup
-#20250718_v1
+#20250718_v2
 
 
 router = APIRouter()
