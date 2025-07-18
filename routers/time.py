@@ -1,6 +1,6 @@
 __version__ = "2025.07.18"
 from datetime import datetime, timezone, timedelta, time
-from loguru import logger
+
 
 def get_tw_time():
     """回傳台灣時區的 datetime.now()"""
@@ -72,11 +72,6 @@ def twse_status() -> dict:
         "now": now_str,
         "mode": mode
     }
-def fallback_trace():
-    """自動 logs 判斷 fallback 模式與台股狀態"""
-    status = twse_status()
-    logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{status['now']} ➜ 模式：{status['mode']}")
-
 
 # 動態產生 __all__（開發時使用 ➜ 可列印出 def 清單）
 def get_all_exports():
