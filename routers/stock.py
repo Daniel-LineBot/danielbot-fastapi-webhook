@@ -12,7 +12,7 @@ import httpx
 import requests
 from bs4 import BeautifulSoup
 from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open_range  # ✅ 引入時間模組 #20250718 added.
-from routers.time import twse_status, fallback_trace, get_tw_time_str #20250718 added.
+from routers.time import twse_status, get_tw_time_str #20250718 added.
 #20250718_v2
 
 
