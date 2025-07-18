@@ -11,6 +11,7 @@ from typing import Optional, Union
 import httpx
 import requests
 from bs4 import BeautifulSoup
+from routers.time import get_tw_time #20250718 added.
 #20250718_v2
 
 
