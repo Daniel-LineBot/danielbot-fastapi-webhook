@@ -8,6 +8,89 @@ from routers.twse import get_twse_industry
 from routers.goodinfo import get_goodinfo_industry
 from routers.mock_stock import get_mock_industry
 
+async def reply_stock_price_only(text: str) -> str:
+    """
+    快速回覆語句 ➜ 只回成交價：「成交價 858 元」
+    適合 LINE Quick Reply / bubble 中使用
+    """
+    info = await resolve_stock_input(text)
+    price = info.get("price", "查無")
+    return f"成交價 {price} 元"
+
+async def stock_payload(text: str) -> dict:
+    """
+    查詢股票完整 payload ➜ 給前端用 ➜ name, id, price, source
+    """
+    info = await resolve_stock_input(text, full=True)
+    return {
+        "name": info.get("name"),
+        "id": info.get("id"),
+        "price": info.get("price"),
+        "source": info.get("source"),
+        "industry": info.get("industry")
+    }
+
+async def name_summary(text: str, source: str = "twse") -> dict:
+    """
+    只回傳名稱 / 代碼 / 產業分類 ➜ 不查價格
+    """
+    info = get_stock_identity(text, source)
+    stock_id = info["id"]
+    name = info["name"]
+
+    if stock_id == "查無":
+        return {"id": "查無", "name": "查無", "industry": "查無"}
+
+    if source == "twse":
+        industry = get_twse_industry(stock_id)
+    elif source == "goodinfo":
+        industry = get_goodinfo_industry(stock_id)
+    elif source == "mock":
+        industry = get_mock_industry(stock_id)
+    else:
+        industry = "未知"
+
+    return {
+        "id": stock_id,
+        "name": name,
+        "industry": industry
+    }
+
+async def hint_trace(text: str) -> str:
+    """
+    logs trace + 語意回覆同步執行 ➜ 一次輸入即顯示
+    """
+    info = await resolve_stock_input(text, full=True)
+    price = info.get("price", "查無")
+    name_stock_trace(info, price)
+    logger.info(f"[查詢摘要] ➜ {query_summary(info)}")
+    return compose_reply(info, price)
+
+def query_summary(info: dict) -> dict:
+    """
+    將 info 結構整理為 summary dict ➜ logs 顯示完整資訊
+    """
+    return {
+        "stock_id": info.get("id"),
+        "stock_name": info.get("name"),
+        "industry": info.get("industry"),
+        "price": info.get("price"),
+        "source": info.get("source"),
+        "fallback_mode": info.get("fallback_mode", "未標註")
+    }
+
+async def callback_router(text: str) -> str:
+    """
+    根據查價結果動態回覆語意語句 ➜ 若查無則回傳提示語
+    """
+    info = await resolve_stock_input(text, full=True)
+    price = info.get("price", "查無")
+
+    if price == "查無":
+        return f"⚠️ 查詢失敗 ➜ 無法取得 {info.get('name')}（{info.get('id')}） 的成交價"
+    
+    name_stock_trace(info, price)
+    return compose_reply(info, price)
 
 async def get_stock_reply(text: str) -> str:
     """
