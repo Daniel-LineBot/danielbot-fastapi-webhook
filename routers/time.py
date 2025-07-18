@@ -70,4 +70,8 @@ def twse_status() -> dict:
         "now": now_str,
         "mode": mode
     }
+def fallback_trace():
+    """自動 logs 判斷 fallback 模式與台股狀態"""
+    status = twse_status()
+    logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{status['now']} ➜ 模式：{status['mode']}")
 
