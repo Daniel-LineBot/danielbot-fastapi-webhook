@@ -8,6 +8,21 @@ from routers.twse import get_twse_industry
 from routers.goodinfo import get_goodinfo_industry
 from routers.mock_stock import get_mock_industry
 
+async def reply_stock_identity(text: str) -> str:
+    """
+    回覆股票身份語句 ➜ 台積電（2330） ➜ 半導體
+    """
+    info = await name_summary(text)
+    return f"{info.get('name')}（{info.get('id')}） ➜ 產業分類：{info.get('industry')}"
+
+
+async def reply_stock_label(text: str) -> str:
+    """
+    回覆股票名稱標籤 ➜ 台積電（2330）
+    可用於 callback reply / logs / 前端提示語
+    """
+    info = get_stock_identity(text)
+    return f"{info.get('name', '查無')}（{info.get('id', '查無')}）"
 
 async def bubble_summary_flex(text: str) -> dict:
     """
