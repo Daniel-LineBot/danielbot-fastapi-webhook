@@ -8,6 +8,55 @@ from routers.twse import get_twse_industry
 from routers.goodinfo import get_goodinfo_industry
 from routers.mock_stock import get_mock_industry
 
+
+async def payload_trace(text: str) -> dict:
+    """
+    logs trace ➕ 回傳完整 payload 結構（callback webhook 用）
+    """
+    info = await resolve_stock_input(text, full=True)
+    price_data = await get_stock_info(info["id"])
+
+    payload = {
+        "name": info.get("name"),
+        "id": info.get("id"),
+        "industry": info.get("industry"),
+        "price": price_data.get("price"),
+        "open": price_data.get("open"),
+        "high": price_data.get("high"),
+        "low": price_data.get("low"),
+        "datetime": price_data.get("datetime"),
+        "source": info.get("source"),
+        "fallback_mode": info.get("fallback_mode", "未標註")
+    }
+
+    logger.info(f"[payload_trace] ➜ {payload}")
+    return payload
+
+async def bubble_summary_full(text: str) -> dict:
+    """
+    回傳完整行情 Flex Bubble JSON ➜ open, high, low, price, datetime, fallback_mode
+    """
+    info = await resolve_stock_input(text, full=True)
+    price_data = await get_stock_info(info["id"])
+
+    return {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "spacing": "sm",
+            "contents": [
+                {"type": "text", "text": f"{info['name']}（{info['id']}）", "weight": "bold", "size": "xl"},
+                {"type": "text", "text": f"成交價：{price_data.get('price', '查無')} 元", "size": "sm"},
+                {"type": "text", "text": f"開盤價：{price_data.get('open', '查無')} ➜ 高點：{price_data.get('high', '查無')} ➜ 低點：{price_data.get('low', '查無')}", "size": "sm"},
+                {"type": "text", "text": f"時間：{price_data.get('datetime', '查無')}", "size": "xs", "color": "#999999"},
+                {"type": "text", "text": f"產業分類：{info.get('industry', '查無')}", "size": "sm"},
+                {"type": "text", "text": f"資料來源：{info.get('source', '未知').upper()} ➜ 模式：{info.get('fallback_mode', '未知')}", "size": "xs", "color": "#AAAAAA"}
+            ]
+        }
+    }
+
+
 async def price_and_industry(text: str) -> str:
     """
     回「台積電 ➜ 成交：854 元 ➜ 產業：半導體」
