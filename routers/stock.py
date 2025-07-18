@@ -158,10 +158,6 @@ def get_goodinfo_data(stock_id: str):
     except Exception as e:
         logger.exception(f"[Goodinfo Fallback] 查詢失敗 ➜ {str(e)}")
         return {"error": f"Goodinfo fallback 查詢失敗：{str(e)}"}        
-from typing import Optional, Union
-from routers.time import get_tw_time_str, twse_status, fallback_trace
-from routers.time import get_tw_time  # 若其他地方需要
-
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None):
     logger.info("🪛 DanielBot stock.py ➜ 已啟動 get_stock_info handler")
     logger.info(f"📦 傳入 stock_id={stock_id}, date={repr(date)}")
