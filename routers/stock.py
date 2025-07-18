@@ -22,10 +22,18 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
+ 
+#20250718 Start added.-------------
+def is_twse_open():
+    tw_time = datetime.now(timezone(timedelta(hours=8))).time()
+    return time(9, 0) <= tw_time <= time(13, 30)
+#20250718 End added.-------------
 
+"""20250718 modify
 def is_twse_open():
     now = datetime.now().time()
     return time(9, 0) <= now <= time(13, 30)
+"""
 @router.post("/webhook")
 async def webhook(request: Request):
     body = await request.body()
