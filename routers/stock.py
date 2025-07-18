@@ -174,7 +174,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
     # ✅ 20250718 ➜ 改用 time.py 工具來判斷台灣時間
     #now_time = get_tw_time().strftime("%H:%M:%S")
    # mode = "即時查詢" if is_market_open("twse") else "歷史查詢"
-    logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{now_time} ➜ 模式：{mode}")
+    #logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{now_time} ➜ 模式：{mode}")
 
 
     # ✅ fallback 判斷 ➜ 自動 logs 台股狀態
