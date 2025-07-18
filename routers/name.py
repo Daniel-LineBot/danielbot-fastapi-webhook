@@ -9,6 +9,80 @@ from routers.goodinfo import get_goodinfo_industry
 from routers.mock_stock import get_mock_industry
 
 
+async def bubble_summary_flex(text: str) -> dict:
+    """
+    回傳完整 Flex Bubble ➜ 含 header 標題 / body 資料 / footer fallback 顯示
+    """
+    info = await resolve_stock_input(text, full=True)
+    price_data = await get_stock_info(info["id"])
+    name = info.get("name")
+    stock_id = info.get("id")
+    price = price_data.get("price", "查無")
+    open_ = price_data.get("open", "查無")
+    high = price_data.get("high", "查無")
+    low = price_data.get("low", "查無")
+    source = info.get("source", "未知")
+    mode = info.get("fallback_mode", "未知")
+    industry = info.get("industry", "未分類")
+
+    return {
+        "type": "bubble",
+        "header": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [{
+                "type": "text",
+                "text": f"{name}（{stock_id}）",
+                "weight": "bold",
+                "size": "xl"
+            }]
+        },
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                { "type": "text", "text": f"成交價：{price} 元" },
+                { "type": "text", "text": f"開盤：{open_} ➜ 高點：{high} ➜ 低點：{low}" },
+                { "type": "text", "text": f"產業分類：{industry}" },
+                { "type": "text", "text": f"時間：{price_data.get('datetime', '查無')}" }
+            ]
+        },
+        "footer": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                { "type": "text", "text": f"來源：{source.upper()} ➜ 模式：{mode}", "size": "xs", "color": "#AAAAAA" }
+            ]
+        }
+    }
+
+async def get_reply_and_payload(text: str) -> dict:
+    """
+    同時回語意 reply 字串 ＋ 查詢 payload 結構 dict
+    用於 webhook 同步 reply 文字與回傳 JSON
+    """
+    info = await resolve_stock_input(text, full=True)
+    price_data = await get_stock_info(info["id"])
+
+    reply = compose_reply(info, price_data.get("price", "查無"))
+    payload = {
+        "id": info.get("id"),
+        "name": info.get("name"),
+        "industry": info.get("industry"),
+        "price": price_data.get("price"),
+        "open": price_data.get("open"),
+        "high": price_data.get("high"),
+        "low": price_data.get("low"),
+        "datetime": price_data.get("datetime"),
+        "source": info.get("source"),
+        "fallback_mode": info.get("fallback_mode", "未標註")
+    }
+
+    return {
+        "reply": reply,
+        "payload": payload
+    }
+
 async def payload_trace(text: str) -> dict:
     """
     logs trace ➕ 回傳完整 payload 結構（callback webhook 用）
