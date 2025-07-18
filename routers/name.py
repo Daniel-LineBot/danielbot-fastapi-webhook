@@ -8,6 +8,67 @@ from routers.twse import get_twse_industry
 from routers.goodinfo import get_goodinfo_industry
 from routers.mock_stock import get_mock_industry
 
+async def price_only_trace(text: str) -> str:
+    """
+    logs trace 成交價查詢 ➕ 回覆「目前價格為 X 元」
+    用於 webhook 簡化查價場景
+    """
+    info = await resolve_stock_input(text, full=True)
+    price = info.get("price", "查無")
+    logger.info(f"[price_only_trace] {info.get('name')}（{info.get('id')}） ➜ 成交價 {price} 元 ➜ 來源：{info.get('source')}")
+    return f"目前價格為 {price} 元"
+
+async def get_kline_summary(text: str) -> str:
+    """
+    回傳語意行情摘要 ➜ 今日開盤 / 高點 / 成交價
+    適用於 callback bubble 顯示 / logs trace 比對
+    """
+    info = await resolve_stock_input(text, full=True)
+    price_data = await get_stock_info(info["id"])
+
+    open_price = price_data.get("open", "查無")
+    high_price = price_data.get("high", "查無")
+    price = price_data.get("price", "查無")
+
+    name = info.get("name", "查無")
+    stock_id = info.get("id", "查無")
+
+    return f"📊 {name}（{stock_id}）\n今日開盤：{open_price} ➜ 高點：{high_price} ➜ 成交：{price}"
+
+async def quick_trace(text: str) -> str:
+    """
+    logs trace + 快速回覆語句 ➜ 回「成交價 858 元」
+    適合 webhook callback 簡化處理 ➜ 回應與 trace 同步
+    """
+    info = await resolve_stock_input(text, full=True)
+    price = info.get("price", "查無")
+    name_stock_trace(info, price)
+    logger.info(f"[QuickTrace] ➜ 查詢 {info.get('name')}（{info.get('id')}） ➜ 成交價 {price} 元 ➜ 來源：{info.get('source')}")
+    return f"成交價 {price} 元"
+async def stock_payload_verbose(text: str) -> dict:
+    """
+    查詢股票完整 payload（進階版） ➜ price, open, high, low, name, id, source_detail
+    適合前端顯示 K 線摘要或語意 bubble
+    """
+    info = await resolve_stock_input(text, full=True)
+    stock_id = info.get("id", "查無")
+
+    # 查主幹行情 ➜ 必須從 stock.py 查 info 結構
+    raw = await get_stock_info(stock_id)
+    return {
+        "id": info.get("id"),
+        "name": info.get("name"),
+        "industry": info.get("industry"),
+        "source": info.get("source"),
+        "fallback_mode": info.get("fallback_mode", "未標註"),
+        "price": raw.get("price"),
+        "open": raw.get("open"),
+        "high": raw.get("high"),
+        "low": raw.get("low"),
+        "datetime": raw.get("datetime"),
+        "source_detail": raw.get("source")  # 可能是 TWSE / Goodinfo
+    }
+
 async def reply_stock_price_only(text: str) -> str:
     """
     快速回覆語句 ➜ 只回成交價：「成交價 858 元」
