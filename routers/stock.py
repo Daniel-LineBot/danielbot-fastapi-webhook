@@ -158,6 +158,10 @@ def get_goodinfo_data(stock_id: str):
     except Exception as e:
         logger.exception(f"[Goodinfo Fallback] 查詢失敗 ➜ {str(e)}")
         return {"error": f"Goodinfo fallback 查詢失敗：{str(e)}"}        
+from typing import Optional, Union
+from routers.time import get_tw_time_str, twse_status, fallback_trace
+from routers.time import get_tw_time  # 若其他地方需要
+
 async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None):
     logger.info("🪛 DanielBot stock.py ➜ 已啟動 get_stock_info handler")
     logger.info(f"📦 傳入 stock_id={stock_id}, date={repr(date)}")
@@ -169,11 +173,10 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         logger.info(f"🧮 使用者指定日期 ➜ {date.strip()} ➜ 啟用 get_historical_data()")
         return await get_historical_data(stock_id, date.strip())
 
-    # ✅ 20250718 ➜ 改用 time.py 工具來判斷台灣時間
+    # ✅ fallback 模式 ➜ 無 date ➜ 啟用 fallback 判斷
     logger.info("🧭 未提供有效 date ➜ 啟用 fallback 判斷")
-
     fallback_trace()
- 
+
     status = twse_status()
     if status["is_open"]:
         logger.info("📈 台股目前在盤中 ➜ 啟用即時查詢")
@@ -183,17 +186,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         today = get_tw_time_str()
         logger.info(f"[TWSE fallback] fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
-"""
-    if is_market_open("twse"):
-        logger.info("📈 台股目前在盤中 ➜ 啟用即時查詢")
-        return await get_realtime_data(stock_id)
-    else:
-        start, end = twse_open_range()
-        logger.info(f"📉 台股目前不在盤中 ➜ 時段為 {start.strftime('%H:%M')} ~ {end.strftime('%H:%M')}")
-        today = get_tw_time_str()  # ✅ 回傳台灣當日字串 ➜ YYYYMMDD
-        logger.info(f"[TWSE fallback] 市場已收盤 ➜ fallback 查詢今日盤後 ➜ {today}")
-        return await get_historical_data(stock_id, today)
-        """
+
 #20250718 add
 def fallback_trace():
     """自動 logs 判斷 fallback 模式與台股狀態"""
