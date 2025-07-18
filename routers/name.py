@@ -9,6 +9,28 @@ from routers.goodinfo import get_goodinfo_industry
 from routers.mock_stock import get_mock_industry
 
 
+async def get_stock_reply(text: str) -> str:
+    """
+    一行 callback 用法 ➜ 回傳完整語句含名稱、成交價、產業、來源
+    """
+    info = await resolve_stock_input(text, full=True)
+    price = info.get("price", "查無")
+    name_stock_trace(info, price)
+    return compose_reply(info, price)
+    
+async def hint_reply(text: str) -> str:
+    """
+    回傳推薦語意語句 ➜ 加 emoji 與 fallback 判斷提示
+    """
+    info = await resolve_stock_input(text, full=True)
+    price = info.get("price", "查無")
+    mode = info.get("fallback_mode", "未知模式")
+    name = info.get("name", "查無")
+    stock_id = info.get("id", "查無")
+
+    return f"📢 查詢 {name}（{stock_id}） ➜ 成交價 {price} 元\n🔍 判斷模式：{mode}"
+
+
 async def resolve_stock_input(text: str, full: bool = False) -> dict:
     """
     智能解析 ➜ 自動 fallback 路徑選擇
