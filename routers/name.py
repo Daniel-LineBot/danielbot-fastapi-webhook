@@ -8,6 +8,68 @@ from routers.twse import get_twse_industry
 from routers.goodinfo import get_goodinfo_industry
 from routers.mock_stock import get_mock_industry
 
+async def price_and_industry(text: str) -> str:
+    """
+    回「台積電 ➜ 成交：854 元 ➜ 產業：半導體」
+    用於精簡語意回覆 or Bubble 摘要
+    """
+    info = await resolve_stock_input(text, full=True)
+    price = info.get("price", "查無")
+    name = info.get("name", "查無")
+    industry = info.get("industry", "未分類")
+    return f"{name} ➜ 成交：{price} 元 ➜ 產業：{industry}"
+
+async def bubble_summary(text: str) -> dict:
+    """
+    回傳一段 Flex Bubble 用的 JSON 結構 ➜ 名稱 / 成交價 / 產業 / fallback
+    """
+    info = await resolve_stock_input(text, full=True)
+    price_data = await get_stock_info(info["id"])
+
+    return {
+        "type": "bubble",
+        "hero": {
+            "type": "image",
+            "url": "https://example.com/stock_banner.png",
+            "size": "full",
+            "aspectRatio": "20:13",
+            "aspectMode": "cover"
+        },
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": f"{info['name']}（{info['id']}）",
+                    "weight": "bold",
+                    "size": "xl"
+                },
+                {
+                    "type": "text",
+                    "text": f"成交價：{price_data.get('price', '查無')} 元",
+                    "size": "sm",
+                    "color": "#666666",
+                    "wrap": True
+                },
+                {
+                    "type": "text",
+                    "text": f"產業分類：{info['industry']}",
+                    "size": "sm",
+                    "color": "#999999",
+                    "wrap": True
+                },
+                {
+                    "type": "text",
+                    "text": f"來源：{info['source'].upper()} ➜ 模式：{info.get('fallback_mode', '未知')}",
+                    "size": "xs",
+                    "color": "#999999",
+                    "wrap": True
+                }
+            ]
+        }
+    }
+
 async def price_only_trace(text: str) -> str:
     """
     logs trace 成交價查詢 ➕ 回覆「目前價格為 X 元」
