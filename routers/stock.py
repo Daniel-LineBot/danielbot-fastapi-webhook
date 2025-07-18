@@ -182,13 +182,6 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         today = get_tw_time_str()
         logger.info(f"[TWSE fallback] fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
-
-#20250718 add
-def fallback_trace():
-    """自動 logs 判斷 fallback 模式與台股狀態"""
-    status = twse_status()
-    logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{status['now']} ➜ 模式：{status['mode']}")
-# End
 async def get_realtime_data(stock_id: str):
     url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{stock_id}.tw"
     headers = {
