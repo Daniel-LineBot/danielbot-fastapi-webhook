@@ -41,7 +41,7 @@ def handle_text_message(event: MessageEvent):
     text_raw = event.message.text.strip()
     text = text_raw.replace(" ", "")
     logger.info(f"[Webhook Text] 原始 ➜ {repr(text_raw)} ➜ 清理後 ➜ {repr(text)}")
-"""
+
     # ✅ 配息模組優先判斷
     if re.match(r"^配息\d{4}$", text):
         stock_id = re.sub(r"[^\d]", "", text)
@@ -65,7 +65,7 @@ def handle_text_message(event: MessageEvent):
         except Exception as e:
             logger.exception(f"📛 回覆配息訊息失敗：{str(e)}")
         return  # ⛔️ 記得 return，避免進入查股 fallback
-"""
+
     # 📈 查股模組 ➜ 用你現有的查詢邏輯接在後面即可
     text = text_raw  # 你原本的查股模組就吃未清理的 text_raw
     reply_text = ""
