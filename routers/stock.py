@@ -326,7 +326,7 @@ def get_dividend_info(stock_id: str):
         return {"error": "找不到任何可用的配息資料"}
         
     # 如果你已經在 stock.py，可直接呼叫自己內部函式
-    stock_info = get_stock_info(stock_id)
+    stock_info = asyncio.run(get_stock_info(stock_id))
     stock_name = stock_info.get("股票名稱", "N/A")
     return {
         "股票代號": stock_id,
