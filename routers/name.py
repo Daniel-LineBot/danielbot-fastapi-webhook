@@ -8,6 +8,64 @@ from routers.twse import get_twse_industry
 from routers.goodinfo import get_goodinfo_industry
 from routers.mock_stock import get_mock_industry
 
+
+async def resolve_stock_input(text: str, full: bool = False) -> dict:
+    """
+    智能解析 ➜ 自動 fallback 路徑選擇
+    若 full=True ➜ 回傳 fallback path 與 TWSE 判斷
+    """
+    info = await get_stock_profile(text, source="twse")
+    if info.get("price") != "查無":
+        info["source"] = "twse"
+        if full:
+            info["fallback_mode"] = "即時查詢"
+        return info
+
+    info = await get_stock_profile(text, source="goodinfo")
+    if info.get("price") != "查無":
+        info["source"] = "goodinfo"
+        if full:
+            info["fallback_mode"] = "歷史查詢 ➜ TWSE 失敗 ➜ fallback Goodinfo"
+        return info
+
+    info = await get_stock_profile(text, source="mock")
+    info["source"] = "mock"
+    if full:
+        info["fallback_mode"] = "模擬資料 ➜ TWSE & Goodinfo 查無"
+    return info
+
+async def get_stock_hint(text: str, source: str = "auto") -> str:
+    """
+    產出語意語句：「查詢台積電（2330） ➜ 成交價 858 元」
+    source="auto" ➜ 自動 fallback（TWSE ➜ Goodinfo ➜ Mock）
+    """
+    if source == "auto":
+        info = await resolve_stock_input(text)
+    else:
+        info = await get_stock_profile(text, source)
+
+    price = info.get("price", "查無")
+    return compose_reply(info, price)
+
+def name_stock_trace(info: dict, price: Union[str, int]):
+    """
+    logs trace 用 ➜ 回報名稱、代碼、產業、價格、來源
+    """
+    logger.info(f"[name_stock_trace] 名稱={info.get('name')} ➜ 代碼={info.get('id')} ➜ 價格={price} ➜ 來源={info.get('source')}")
+
+def compose_reply(info: dict, price: Union[str, int]) -> str:
+    """
+    組合 callback reply 語句 ➜ 台積電（2330）成交價 858 元
+    info: 包含 name, id, industry, source 等欄位
+    price: 成交價
+    """
+    name = info.get("name", "查無")
+    stock_id = info.get("id", "查無")
+    industry = info.get("industry", "未分類")
+    source = info.get("source", "未知").upper()
+
+    return f"📈 {name}（{stock_id}）\n成交價：{price} 元\n產業分類：{industry}\n資料來源：{source}"
+
 async def get_stock_profile(text: str, source: str = "twse") -> dict:
     """
     一鍵查詢 ➜ 股票代碼、名稱、產業、目前成交價（用 callback 主幹查）
