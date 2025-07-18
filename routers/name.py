@@ -3,6 +3,56 @@ from routers.twse import get_twse_name
 from routers.goodinfo import get_goodinfo_name
 from routers.mock_stock import get_mock_name
 
+def get_stock_identity(text: str, source: str = "twse") -> dict:
+    """
+    自動判斷輸入是代碼還是名稱 ➜ 回傳 {id, name}
+    """
+    text = str(text).strip()
+    source = source.lower()
+
+    if not text:
+        return {"id": "查無", "name": "查無"}
+
+    if text.isdigit():
+        stock_id = text
+        name = get_stock_name(stock_id, source)
+    else:
+        stock_id = reverse_name_lookup(text, source)
+        name = get_stock_name(stock_id, source)
+
+    return {
+        "id": stock_id if stock_id else "查無",
+        "name": name if name else "查無"
+    }
+
+def get_stock_metadata(stock_id: str, source: str = "twse") -> dict:
+    """
+    回傳股票 metadata ➜ id, name, 產業（若支援）
+    """
+    from routers.twse import get_twse_industry
+    from routers.goodinfo import get_goodinfo_industry
+    from routers.mock_stock import get_mock_industry
+
+    stock_id = str(stock_id).strip()
+    source = source.lower()
+
+    name = get_stock_name(stock_id, source)
+
+    if source == "twse":
+        industry = get_twse_industry(stock_id)
+    elif source == "goodinfo":
+        industry = get_goodinfo_industry(stock_id)
+    elif source == "mock":
+        industry = get_mock_industry(stock_id)
+    else:
+        industry = "未知"
+
+    return {
+        "id": stock_id,
+        "name": name if name else "查無",
+        "industry": industry if industry else "未分類"
+    }
+
 def get_stock_name_with_source(stock_id: str, source: str = "twse") -> dict:
     """
     查詢股票名稱並回傳 dict 結構：{ name, source, found }
