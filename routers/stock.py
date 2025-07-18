@@ -163,9 +163,9 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
     mode = "即時查詢" if is_twse_open() else "歷史查詢"
     logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{now_time} ➜ 模式：{mode}")
 
-    if is_twse_open():
+    if is_twse_open(): #盤中-->查即時
         return await get_realtime_data(stock_id)
-    else:
+    else: 非交易時間-->查歷史
         today = datetime.today().strftime("%Y%m%d")
         logger.info(f"[TWSE fallback] 市場已收盤 ➜ fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
