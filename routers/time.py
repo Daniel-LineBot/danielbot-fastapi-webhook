@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, time
 
 def get_tw_time():
     """回傳台灣時區的 datetime.now()"""
@@ -10,5 +10,25 @@ def get_tw_time_str(fmt="%Y%m%d"):
     return get_tw_time().strftime(fmt)
 
 def get_tw_hour():
-    """回傳台灣時區整點小時（int）"""
+    """回傳台灣時間整點小時（int）"""
     return get_tw_time().hour
+
+def is_open_twse():
+    """判斷台股是否在盤中交易時間"""
+    now_tw = get_tw_time().time()
+    return time(9, 0) <= now_tw <= time(13, 30)
+
+def get_tw_daypart():
+    """回傳台灣時間目前屬於哪個交易段落：盤前 / 盤中 / 盤後 / 非交易日"""
+    now = get_tw_time()
+    weekday = now.weekday()  # 0=Monday, 6=Sunday
+    t = now.time()
+
+    if weekday >= 5:  # 六日
+        return "非交易日"
+    elif t < time(9, 0):
+        return "盤前"
+    elif time(9, 0) <= t <= time(13, 30):
+        return "盤中"
+    else:
+        return "盤後"
