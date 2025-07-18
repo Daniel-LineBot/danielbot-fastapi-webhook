@@ -11,7 +11,7 @@ from typing import Optional, Union
 import httpx
 import requests
 from bs4 import BeautifulSoup
-from routers.time import get_tw_time #20250718 added.
+from routers.time import get_tw_time, is_market_open, get_tw_time_str, twse_open_range #20250718 added.
 #20250718_v2
 
 
@@ -169,14 +169,26 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         return await get_historical_data(stock_id, date.strip())
 
     logger.info("🧭 未提供有效 date ➜ 啟用 fallback 判斷")
-    now_time = datetime.now().strftime("%H:%M:%S")
+
+#20250718 start added
+   now_time = get_tw_time().strftime("%H:%M:%S")
+   mode = "即時查詢" if is_market_open("twse") else "歷史查詢"
+   logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{now_time} ➜ 模式：{mode}")
+#20250718 END added
+
+"""@20250718 del
+ now_time = datetime.now().strftime("%H:%M:%S")
     mode = "即時查詢" if is_twse_open() else "歷史查詢"
     logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{now_time} ➜ 模式：{mode}")
-
+"""
     if is_twse_open():
         return await get_realtime_data(stock_id)
     else:
-        today = datetime.today().strftime("%Y%m%d")
+        today = get_tw_time_str()
+       #today = datetime.today().strftime("%Y%m%d") #20250718 del
+     
+         
+     
         logger.info(f"[TWSE fallback] 市場已收盤 ➜ fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
 async def get_realtime_data(stock_id: str):
