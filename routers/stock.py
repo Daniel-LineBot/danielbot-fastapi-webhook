@@ -175,7 +175,7 @@ async def get_realtime_data(stock_id: str):
         "User-Agent": "Mozilla/5.0",
         "Referer": "https://www.twse.com.tw/"
     }
-
+  
     logger.info(f"📡 [TWSE 即時] 發送查詢 ➜ stock_id={stock_id}")
 
     async with httpx.AsyncClient() as client:
