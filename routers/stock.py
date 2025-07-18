@@ -163,9 +163,9 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
     mode = "即時查詢" if is_twse_open() else "歷史查詢"
     logger.info(f"🧪 fallback 判斷 ➜ 現在時間：{now_time} ➜ 模式：{mode}")
 
-    if is_twse_open(): #盤中-->查即時
+    if is_twse_open():
         return await get_realtime_data(stock_id)
-    else: 非交易時間-->查歷史
+    else:
         today = datetime.today().strftime("%Y%m%d")
         logger.info(f"[TWSE fallback] 市場已收盤 ➜ fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
@@ -175,7 +175,7 @@ async def get_realtime_data(stock_id: str):
         "User-Agent": "Mozilla/5.0",
         "Referer": "https://www.twse.com.tw/"
     }
-  
+
     logger.info(f"📡 [TWSE 即時] 發送查詢 ➜ stock_id={stock_id}")
 
     async with httpx.AsyncClient() as client:
@@ -286,59 +286,3 @@ async def get_historical_data(stock_id: str, date: str):
     return {
         "error": f"{date} 起往前 7 日查無交易紀錄 ➜ 可能遇連假或尚未釋出資料"
     }
-
-def get_dividend_info(stock_id: str):
-    url = f"https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID={stock_id}&STEP=DATA"
-    headers = {
-        "user-agent": "Mozilla/5.0",
-        "referer": "https://goodinfo.tw/"
-    }
-
-    try:
-        r = requests.get(url, headers=headers, timeout=10)
-        soup = BeautifulSoup(r.text, "html.parser")
-    except Exception as e:
-        return {"error": f"無法連線到 Goodinfo：{str(e)}"}
-
-    table = (
-        soup.select_one("table.b1.p4_2.r10.box_shadow")
-        or soup.select_one("table.b1.p4_2.r10")
-    )
-
-    if not table:
-        return {"error": f"查無 {stock_id} 的配息表格，可能網站結構已變"}
-
-    rows = table.select("tr")[1:]
-    latest_row = None
-    this_year = str(datetime.now().year)
-
-    for row in rows:
-        cols = [td.get_text(strip=True) for td in row.select("td")]
-        if len(cols) >= 10 and cols[0].startswith(this_year):
-            latest_row = cols
-            break
-
-    if not latest_row and rows:
-        latest_row = [td.get_text(strip=True) for td in rows[0].select("td")]
-        note = "查無今年資料，回傳最近一筆紀錄"
-    elif latest_row:
-        note = "查詢成功"
-    else:
-        return {"error": "找不到任何可用的配息資料"}
-        
-    # 如果你已經在 stock.py，可直接呼叫自己內部函式
-    #stock_info = asyncio.run(get_stock_info(stock_id))
-  #  stock_name = stock_info.get("股票名稱", "N/A")
-    return {
-        "股票代號": stock_id,
-      #  "股票名稱": stock_name,  ✅ 才能讓 callback 顯示正常的名稱
-        "配息年度": latest_row[0],
-        "除權息日": latest_row[3],
-        "現金股利": latest_row[4],
-        "股票股利": latest_row[5],
-        "發放日": latest_row[6],
-        "來源": latest_row[8],
-        "公告來源": "Goodinfo",
-        "提示": note
-    }
-
