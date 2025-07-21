@@ -13,6 +13,7 @@ import requests
 from bs4 import BeautifulSoup
 from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open_range  # ✅ 引入時間模組 #20250718 added.
 from routers.time import twse_status, get_tw_time_str #20250718 added.
+from routers.name import get_stock_name  #20250721 added.
 
 #20250718_v2
 
@@ -178,7 +179,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
     if status["is_open"]:
         logger.info("📈 台股目前在盤中 ➜ 啟用即時查詢")
         result = await get_realtime_data(stock_id)
-    
+    #0721 start modify
         # ✅ fallback 判斷區塊要在 if 裡 ➜ 多縮一層
         if result.get("price") == "-" or not result.get("price"):
             logger.warning("TWSE price missing ➜ fallback to Goodinfo")
@@ -188,7 +189,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
             result["提示"] = "📦 TWSE price 異常 ➜ fallback Goodinfo"
             result["source"] = "goodinfo"
             result["is_fallback"] = True
-    
+      #0721 end modify
         return result
     else:
         logger.info(f"📉 台股目前不在盤中 ➜ 模式：{status['mode']} ➜ 時間：{status['now']}")
@@ -295,6 +296,7 @@ async def get_historical_data(stock_id: str, date: str):
                     result = {
                         "資料來源": "歷史盤後",
                         "股票代號": stock_id,
+                        "股票名稱": get_stock_name(stock_id),  # ✅ 建議加這一行 0721 added
                         "股票名稱": "查詢結果",
                         "原始查詢日期": original_query_date.strftime("%Y%m%d"),
                         "實際回傳日期": target_date.strftime("%Y%m%d"),
