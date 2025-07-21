@@ -13,7 +13,7 @@ import requests
 from bs4 import BeautifulSoup
 from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open_range  # ✅ 引入時間模組 #20250718 added.
 from routers.time import twse_status, get_tw_time_str #20250718 added.
-from routers.name import get_stock_name  #20250721 added.
+#from routers.name import get_stock_name  #20250721 added.
 
 #20250718_v2
 
@@ -296,7 +296,7 @@ async def get_historical_data(stock_id: str, date: str):
                     result = {
                         "資料來源": "歷史盤後",
                         "股票代號": stock_id,
-                        "股票名稱": get_stock_name(stock_id),  # ✅ 建議加這一行 0721 added
+                       # "股票名稱": get_stock_name(stock_id),  # ✅ 建議加這一行 0721 added
                         "股票名稱": "查詢結果",
                         "原始查詢日期": original_query_date.strftime("%Y%m%d"),
                         "實際回傳日期": target_date.strftime("%Y%m%d"),
