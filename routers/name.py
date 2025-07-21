@@ -304,20 +304,22 @@ async def name_summary(text: str, source: str = "twse") -> dict:
     if stock_id == "查無":
         return {"id": "查無", "name": "查無", "industry": "查無"}
 
+    # ✅ 只允許 twse 和 goodinfo ➜ fallback 成功率最高
+    source = source.lower()
     if source == "twse":
         industry = get_twse_industry(stock_id)
     elif source == "goodinfo":
         industry = get_goodinfo_industry(stock_id)
-    elif source == "mock":
-        industry = get_mock_industry(stock_id)
     else:
-        industry = "未知"
+        # ✅ fallback 來源失敗 ➜ 自動用 TWSE 查分類
+        industry = get_twse_industry(stock_id)
 
     return {
         "id": stock_id,
         "name": name,
         "industry": industry
     }
+
 
 async def hint_trace(text: str) -> str:
     """
@@ -451,7 +453,7 @@ async def get_stock_profile(text: str, source: str = "twse") -> dict:
     elif source == "goodinfo":
         industry = get_goodinfo_industry(stock_id)
     elif source == "mock":
-        industry = get_mock_industry(stock_id)
+        industry =  get_twse_industry(stock_id)
     else:
         industry = "未知"
 
@@ -522,7 +524,7 @@ def get_stock_metadata(stock_id: str, source: str = "twse") -> dict:
     elif source == "goodinfo":
         industry = get_goodinfo_industry(stock_id)
     elif source == "mock":
-        industry = get_mock_industry(stock_id)
+        industry =  get_twse_industry(stock_id)
     else:
         industry = "未知"
 
