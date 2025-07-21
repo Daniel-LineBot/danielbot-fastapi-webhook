@@ -296,8 +296,8 @@ async def get_historical_data(stock_id: str, date: str):
                     result = {
                         "資料來源": "歷史盤後",
                         "股票代號": stock_id,
-                       # "股票名稱": get_stock_name(stock_id),  # ✅ 建議加這一行 0721 added
-                        "股票名稱": "查詢結果",
+                        "股票名稱": get_stock_name(stock_id),  # ✅ 建議加這一行 0721 added
+                        #"股票名稱": "查詢結果",
                         "原始查詢日期": original_query_date.strftime("%Y%m%d"),
                         "實際回傳日期": target_date.strftime("%Y%m%d"),
                         "開盤": row[3],
