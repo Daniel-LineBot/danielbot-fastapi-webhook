@@ -377,7 +377,6 @@ async def hint_reply(text: str) -> str:
 
     return f"📢 查詢 {name}（{stock_id}） ➜ 成交價 {price} 元\n🔍 判斷模式：{mode}"
 
-
 async def resolve_stock_input(text: str, full: bool = False) -> dict:
     """
     智能解析 ➜ 自動 fallback 路徑選擇
@@ -397,11 +396,16 @@ async def resolve_stock_input(text: str, full: bool = False) -> dict:
             info["fallback_mode"] = "歷史查詢 ➜ TWSE 失敗 ➜ fallback Goodinfo"
         return info
 
-    info = await get_stock_profile(text, source="mock")
-    info["source"] = "mock"
-    if full:
-        info["fallback_mode"] = "模擬資料 ➜ TWSE & Goodinfo 查無"
-    return info
+    # 🧹 全部來源都查無 ➜ 回傳空值結構
+    return {
+        "id": "查無",
+        "name": "查無",
+        "price": "查無",
+        "industry": "查無",
+        "source": "查無",
+        "fallback_mode": "無有效來源"
+    }
+
 
 async def get_stock_hint(text: str, source: str = "auto") -> str:
     """
@@ -451,8 +455,6 @@ async def get_stock_profile(text: str, source: str = "twse") -> dict:
         industry = get_twse_industry(stock_id)
     elif source == "goodinfo":
         industry = get_goodinfo_industry(stock_id)
-    elif source == "mock":
-        industry =  get_twse_industry(stock_id)
     else:
         industry = "未知"
 
@@ -482,10 +484,7 @@ async def resolve_stock_input(text: str) -> dict:
         info["source"] = "goodinfo"
         return info
 
-    # fallback ➜ mock
-    info = await get_stock_profile(text, source="mock")
-    info["source"] = "mock"
-    return info
+
 
 def get_stock_identity(text: str, source: str = "twse") -> dict:
     """
@@ -522,8 +521,6 @@ def get_stock_metadata(stock_id: str, source: str = "twse") -> dict:
         industry = get_twse_industry(stock_id)
     elif source == "goodinfo":
         industry = get_goodinfo_industry(stock_id)
-    elif source == "mock":
-        industry =  get_twse_industry(stock_id)
     else:
         industry = "未知"
 
@@ -548,8 +545,6 @@ def get_stock_name_with_source(stock_id: str, source: str = "twse") -> dict:
         name = get_twse_name(stock_id)
     elif source == "goodinfo":
         name = get_goodinfo_name(stock_id)
-    elif source == "mock":
-        name = get_mock_name(stock_id)
 
     found = name and name != "查無"
     return {"name": name, "source": source, "found": found}
@@ -569,8 +564,6 @@ def reverse_name_lookup(name: str, source: str = "twse") -> str:
         table = twse_stock_table
     elif source == "goodinfo":
         table = goodinfo_stock_table
-    elif source == "mock":
-        table = mock_stock_table
     else:
         table = {}
 
@@ -593,8 +586,6 @@ def get_stock_name(stock_id: str, source: str = "twse") -> str:
         return get_twse_name(stock_id)
     elif source == "goodinfo":
         return get_goodinfo_name(stock_id)
-    elif source == "mock":
-        return get_mock_name(stock_id)
     else:
         logger.warning(f"⚠️ 未知來源 ➜ {source}")
         return "查無"
