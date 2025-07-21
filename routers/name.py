@@ -6,7 +6,7 @@ from routers.mock_stock import get_mock_name
 from routers.stock import get_stock_info
 from routers.twse import get_twse_industry
 from routers.goodinfo import get_goodinfo_industry
-from routers.mock_stock import get_mock_industry
+#from routers.mock_stock import get_mock_industry
 
 
 
@@ -584,14 +584,8 @@ def reverse_name_lookup(name: str, source: str = "twse") -> str:
     return "查無"
 
 def get_stock_name(stock_id: str, source: str = "twse") -> str:
-    """
-    查詢股票名稱 ➜ 可選來源：twse, goodinfo, mock
-    stock_id: 股票代碼（例如 "2330"）
-    source: 資料來源（預設 twse）
-    return: 股票名稱（例如 "台積電"）或 "查無"
-    """
-    logger.info(f"🔍 get_stock_name ➜ stock_id={stock_id}, source={source}")
 
+    logger.info(f"🔍 get_stock_name ➜ stock_id={stock_id}, source={source}")
     stock_id = str(stock_id).strip()
 
     if not stock_id:
