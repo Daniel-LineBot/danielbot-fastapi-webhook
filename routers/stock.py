@@ -179,7 +179,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         logger.info("📈 台股目前在盤中 ➜ 啟用即時查詢")
         result = await get_realtime_data(stock_id)
     
-        # ✅ 檢查這段是否縮排成 `if` 區塊內部
+        # ✅ 這段務必對齊上方縮排 ➜ 4 空格
         if result.get("price") == "-" or not result.get("price"):
             logger.warning("TWSE price missing ➜ fallback to Goodinfo")
             fallback = await get_goodinfo_price(stock_id)
