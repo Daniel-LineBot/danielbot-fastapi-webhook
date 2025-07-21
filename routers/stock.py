@@ -175,9 +175,17 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
     fallback_trace()
 
     status = twse_status()
-    if status["is_open"]:
-        logger.info("📈 台股目前在盤中 ➜ 啟用即時查詢")
-        return await get_realtime_data(stock_id)
+   if status["is_open"]:
+       logger.info("📈 台股目前在盤中 ➜ 啟用即時查詢")
+       result = await get_realtime_data(stock_id)
+   
+       if result.get("price") == "-" or not result.get("price"):
+           logger.warning("TWSE price missing ➜ fallback to Goodinfo")
+           fallback = await get_goodinfo_price(stock_id)
+           result["price"] = fallback.get("price", "查無")
+           result["source"] = "goodinfo"
+           result["is_fallback"] = True   
+       return result
     else:
         logger.info(f"📉 台股目前不在盤中 ➜ 模式：{status['mode']} ➜ 時間：{status['now']}")
         today = get_tw_time_str()
