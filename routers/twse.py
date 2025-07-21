@@ -1,35 +1,39 @@
 # routers/twse.py
 import re
 from loguru import logger
+import httpx
 
-# 🔍 模擬 TWSE 股票對照表 ➜ 可換成爬蟲結果或本地 cache
-twse_stock_table = {
-    "2330": "台積電",
-    "2317": "鴻海",
-    "2303": "聯電",
-    "5880": "合庫金",
-    "2412": "中華電",
-}
+TWSE_URL = "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"
 
-twse_industry_table = {
-    "2330": "半導體",
-    "2317": "電子代工",
-    "2303": "晶圓製造",
-    "5880": "金融控股",
-    "2412": "電信服務",
-}
+async def fetch_twse_metadata() -> dict:
+    """
+    從 TWSE OpenAPI 取得所有上市公司基本資料 ➜ 回 dict: {stock_id: {name, industry}}
+    """
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(TWSE_URL, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            logger.info(f"📦 TWSE metadata loaded ➜ 共 {len(data)} 筆")
+            return {
+                item["公司代號"]: {
+                    "name": item["公司簡稱"],
+                    "industry": item["產業別"]
+                }
+                for item in data if item.get("公司代號") and item.get("公司簡稱")
+            }
+    except Exception as e:
+        logger.exception(f"❌ TWSE metadata fetch failed ➜ {str(e)}")
+        return {}
 
-def get_twse_name(stock_id: str) -> str:
-    stock_id = str(stock_id).strip()
-    name = twse_stock_table.get(stock_id, "查無")
-    logger.info(f"📌 get_twse_name ➜ {stock_id} ➜ {name}")
-    return name
+async def get_twse_name(stock_id: str) -> str:
+    metadata = await fetch_twse_metadata()
+    return metadata.get(stock_id, {}).get("name", "查無")
 
-def get_twse_industry(stock_id: str) -> str:
-    stock_id = str(stock_id).strip()
-    industry = twse_industry_table.get(stock_id, "未分類")
-    logger.info(f"🏷️ get_twse_industry ➜ {stock_id} ➜ {industry}")
-    return industry
+async def get_twse_industry(stock_id: str) -> str:
+    metadata = await fetch_twse_metadata()
+    return metadata.get(stock_id, {}).get("industry", "未分類")
+
 
 def twse_is_valid_id(stock_id: str) -> bool:
     return bool(re.fullmatch(r"\d{4}", stock_id)) and stock_id in twse_stock_table
