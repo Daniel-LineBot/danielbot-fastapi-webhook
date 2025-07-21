@@ -8,6 +8,8 @@ from routers.twse import get_twse_industry
 from routers.goodinfo import get_goodinfo_industry
 from routers.mock_stock import get_mock_industry
 
+
+
 async def reply_stock_identity(text: str) -> str:
     """
     回覆股票身份語句 ➜ 台積電（2330） ➜ 半導體
@@ -510,10 +512,6 @@ def get_stock_metadata(stock_id: str, source: str = "twse") -> dict:
     """
     回傳股票 metadata ➜ id, name, 產業（若支援）
     """
-    from routers.twse import get_twse_industry
-    from routers.goodinfo import get_goodinfo_industry
-    from routers.mock_stock import get_mock_industry
-
     stock_id = str(stock_id).strip()
     source = source.lower()
 
