@@ -559,10 +559,6 @@ def reverse_name_lookup(name: str, source: str = "twse") -> str:
     """
     根據名稱模糊比對查代碼（只回傳第一筆）
     """
-    from routers.twse import twse_stock_table  # twse_stock_table: Dict[str, str] ➜ {"2330": "台積電"}
-    from routers.goodinfo import goodinfo_stock_table
-    from routers.mock_stock import mock_stock_table
-
     name = name.strip()
     source = source.lower()
 
