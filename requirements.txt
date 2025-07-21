@@ -9,6 +9,8 @@ python-dotenv             # 載入 .env 變數
 pydantic                  # FastAPI 使用模型結構用
 requests>=2.31.0
 beautifulsoup4>=4.12.2
+loguru
+
 
 
 
