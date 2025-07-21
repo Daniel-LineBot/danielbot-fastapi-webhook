@@ -8,10 +8,6 @@ from routers.goodinfo import get_goodinfo_industry
 
 from routers.stock import get_stock_info
 
-#from routers.mock_stock import get_mock_name
-#from routers.mock_stock import get_mock_industry
-
-
 
 async def reply_stock_identity(text: str) -> str:
     """
