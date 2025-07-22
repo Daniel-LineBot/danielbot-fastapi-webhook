@@ -8,7 +8,7 @@ from routers.goodinfo import get_goodinfo_industry
 
 from routers.stock import get_stock_info
 
-
+"""
 async def reply_stock_identity(text: str) -> str:
     """
     回覆股票身份語句 ➜ 台積電（2330） ➜ 半導體
@@ -603,7 +603,7 @@ def reverse_name_lookup(name: str, source: str = "twse") -> str:
             return sid
 
     return "查無"
-
+"""
 def get_stock_name(stock_id: str, source: str = "twse") -> str:
 
     logger.info(f"🔍 get_stock_name ➜ stock_id={stock_id}, source={source}")
