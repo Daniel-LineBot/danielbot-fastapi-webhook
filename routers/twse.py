@@ -34,6 +34,5 @@ async def get_twse_industry(stock_id: str) -> str:
     metadata = await fetch_twse_metadata()
     return metadata.get(stock_id, {}).get("industry", "未分類")
 
-
 def twse_is_valid_id(stock_id: str) -> bool:
     return bool(re.fullmatch(r"\d{4}", stock_id)) and stock_id in twse_stock_table
