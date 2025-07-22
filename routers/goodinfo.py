@@ -3,6 +3,10 @@ import httpx
 import re
 from loguru import logger
 
+from yfinance import Ticker # For Yahoo 即時成交價
+
+
+
 GOODINFO_URL = "https://goodinfo.tw/StockInfo/StockDetail.asp?STOCK_ID={stock_id}"
 
 headers = {
@@ -10,6 +14,17 @@ headers = {
     "Referer": "https://goodinfo.tw/",
     "Accept": "text/html"
 }
+
+
+def get_yahoo_price(stock_id: str) -> dict:
+    try:
+        ticker = Ticker(f"{stock_id}.TW")
+        price = ticker.info.get("currentPrice", "查無")
+        logger.info(f"📦 [yahoo] 成交價 ➜ {stock_id} ➜ {price}")
+        return {"price": str(price)}
+    except Exception as e:
+        logger.warning(f"⚠️ Yahoo price 查詢失敗 ➜ {str(e)}")
+        return {"price": "查無"}
 
 async def get_goodinfo_price_robust(stock_id: str) -> dict:
     """
