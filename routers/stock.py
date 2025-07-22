@@ -303,10 +303,12 @@ async def get_historical_data(stock_id: str, date: str):
                 row_date_str = str(row[0]).strip()
                 if row_date_str == twse_target_date:
                     logger.info(f"[TWSE 歷史] 成交價 ➜ {row[6]} ➜ 資料日 ➜ {twse_target_date}")
+                    name_info = await get_stock_name_industry(stock_id)
                     result = {
                         "資料來源": "歷史盤後",
                         "股票代號": stock_id,
-                      #  "股票名稱": get_stock_name(stock_id),  # ✅ 建議加這一行 0721 added                       
+                        "股票名稱": name_info.get("股票名稱"),
+                        "產業別": name_info.get("產業別"),
                         "原始查詢日期": original_query_date.strftime("%Y%m%d"),
                         "實際回傳日期": target_date.strftime("%Y%m%d"),
                         "開盤": row[3],
