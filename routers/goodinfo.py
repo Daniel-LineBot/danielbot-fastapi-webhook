@@ -13,7 +13,7 @@ headers = {
 
 async def get_goodinfo_price_robust(stock_id: str) -> dict:
     """
-    fallback Goodinfo 查成交價 ➜ 支援 <title> 解析 / <td>成交</td><td>xx.xx</td> 擷取
+    fallback Goodinfo 查成交價 ➜ 改用 <th>成交</th><td>xx.xx</td> 結構 ➕ title 備援
     """
     stock_id = str(stock_id).strip()
     url = GOODINFO_URL.format(stock_id=stock_id)
@@ -23,27 +23,27 @@ async def get_goodinfo_price_robust(stock_id: str) -> dict:
             response = await client.get(url, headers=headers, timeout=10)
             html = response.text
 
-            # 🧪 方法 1 ➜ 從 <title> 擷取成交價（格式常變化 ➜ 保留 fallback）
-            title_match = re.search(r"<title>(.*?)\((\d{4})\)</title>", html)
-            title_price_match = re.search(r"成交價[:：]\s*([\d,]+\.?\d*)", html)
-            if title_price_match:
-                price = title_price_match.group(1).replace(",", "").strip()
-                logger.info(f"📦 [title] Goodinfo 成交價 ➜ {stock_id} ➜ {price}")
+            # ✅ 方法 1 ➜ <th>成交</th><td>xx.xx</td>
+            th_match = re.search(r"<th[^>]*?>\s*成交\s*</th>\s*<td[^>]*?>([\d,.]+)</td>", html, re.IGNORECASE)
+            if th_match:
+                price = th_match.group(1).replace(",", "").strip()
+                logger.info(f"📦 [th] Goodinfo 成交價 ➜ {stock_id} ➜ {price}")
                 return {"price": price}
 
-            # 🧪 方法 2 ➜ 擷取 <td>成交</td><td>xx.xx</td> 結構
-            td_match = re.search(r"<td[^>]*?>\s*成交\s*</td>\s*<td[^>]*?>([\d,.]+)</td>", html, re.IGNORECASE)
-            if td_match:
-                price = td_match.group(1).replace(",", "").strip()
-                logger.info(f"📦 [td] Goodinfo 成交價 ➜ {stock_id} ➜ {price}")
+            # ✅ 方法 2 ➜ legacy title 解析備援
+            legacy_match = re.search(r"成交價[:：]\s*([\d,]+\.?\d*)", html)
+            if legacy_match:
+                price = legacy_match.group(1).replace(",", "").strip()
+                logger.info(f"📦 [title] fallback 成交價 ➜ {stock_id} ➜ {price}")
                 return {"price": price}
 
             logger.warning(f"⚠️ Goodinfo 未找到成交價 ➜ stock_id={stock_id}")
             return {"price": "查無"}
 
     except Exception as e:
-        logger.exception(f"❌ Goodinfo 查成交價失敗 ➜ {str(e)}")
+        logger.exception(f"❌ fallback Goodinfo 查成交價失敗 ➜ {str(e)}")
         return {"price": "查無"}
+
 
 async def get_goodinfo_price(stock_id: str) -> dict:
     """
