@@ -15,7 +15,9 @@ from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open
 from routers.time import twse_status, get_tw_time_str #20250718 added.
 from routers.goodinfo import get_goodinfo_price_robust #20250722 added.
 from routers.goodinfo import get_yahoo_price
-#from routers.name import get_stock_name_industry
+from routers.name import get_stock_name_industry
+from routers.twse import twse_is_valid_id
+
 #20250723_v1
 
 
@@ -327,3 +329,60 @@ async def get_historical_data(stock_id: str, date: str):
     return {
         "error": f"{date} 起往前 7 日查無交易紀錄 ➜ 可能遇連假或尚未釋出資料"
     }
+
+async def get_fallback_price_and_name(stock_id: str, query_time: datetime) -> dict:
+    """
+    依照時間判斷 ➜ 查即時 or 盤後 ➜ 搭配 fallback chain 補上 price + metadata
+    """
+    stock_id = str(stock_id).strip()
+    result = {"股票代號": stock_id}
+
+    if not await twse_is_valid_id(stock_id):
+        result.update({"股票名稱": "格式錯誤", "產業別": "查無", "成交價": "查無"})
+        return result
+
+    try:
+        metadata = await get_stock_name_industry(stock_id)
+        result.update({
+            "股票名稱": metadata.get("股票名稱", "查無"),
+            "產業別": metadata.get("產業別", "查無"),
+        })
+
+        if query_time.time() < time(14, 30):  # 盤中判定邏輯
+            price_info = await get_stock_info(stock_id)
+        else:
+            from routers.historical import get_historical_data
+            price_info = await get_historical_data(stock_id, query_time)
+
+        result["成交價"] = price_info.get("成交價", "查無")
+        result["資料來源"] = price_info.get("資料來源", "查無")
+        return result
+    except Exception as e:
+        logger.exception(f"❌ fallback 成交價查詢失敗 ➜ {str(e)}")
+        result["成交價"] = "查無"
+        result["資料來源"] = "查詢失敗"
+        return result
+
+
+async def fallback_trace_chain(stock_id: str):
+    """
+    logs trace 成交價查詢流程 ➜ TWSE ➜ Goodinfo ➜ Yahoo ➜ TWSE歷史
+    """
+    stock_id = str(stock_id).strip()
+    twse_price = await get_stock_info(stock_id)
+    if twse_price.get("成交價") != "查無":
+        logger.info(f"🔍 TWSE 即時成交價命中 ➜ {twse_price.get('成交價')}")
+        return twse_price
+
+    goodinfo = await get_goodinfo_price_robust(stock_id)
+    if goodinfo.get("成交價") != "查無":
+        logger.info(f"🔁 TWSE 失敗 ➜ fallback Goodinfo 命中 ➜ {goodinfo.get('成交價')}")
+        return goodinfo
+
+    yahoo = get_yahoo_price(stock_id)  # 非 async
+    if yahoo.get("成交價") != "查無":
+        logger.info(f"🔁 fallback Goodinfo ➜ fallback Yahoo 命中 ➜ {yahoo.get('成交價')}")
+        return yahoo
+
+    logger.warning(f"⚠️ TWSE / Goodinfo / Yahoo 全部失敗 ➜ 準備進入 TWSE 歷史查詢")
+    return {"成交價": "查無", "資料來源": "全部查詢失敗"}
