@@ -1,3 +1,4 @@
+import re
 from loguru import logger
 
 from routers.twse import get_twse_name
