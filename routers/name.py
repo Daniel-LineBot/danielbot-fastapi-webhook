@@ -8,7 +8,7 @@ from routers.goodinfo import get_goodinfo_industry
 
 from routers.stock import get_stock_info
 
-"""
+""" 
 async def reply_stock_identity(text: str) -> str:
     """
     回覆股票身份語句 ➜ 台積電（2330） ➜ 半導體
