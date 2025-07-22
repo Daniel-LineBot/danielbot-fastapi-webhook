@@ -10,6 +10,42 @@ headers = {
     "Referer": "https://goodinfo.tw/",
     "Accept": "text/html"
 }
+# routers/goodinfo.py
+import httpx
+import re
+from loguru import logger
+
+async def get_goodinfo_price(stock_id: str) -> dict:
+    """
+    fallback Goodinfo 查歷史價格 ➜ 回傳 {'price': xx.xx}
+    """
+    stock_id = str(stock_id).strip()
+    url = f"https://goodinfo.tw/StockInfo/StockDetail.asp?STOCK_ID={stock_id}"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://goodinfo.tw/",
+        "Accept": "text/html"
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers, timeout=10)
+            html = response.text
+
+            # 🔍 擷取成交價 ➜ 假設存在 "成交價：858 元"
+            match = re.search(r"成交價[:：]\s*([\d,]+\.?\d*)", html)
+            if match:
+                price = match.group(1).replace(",", "").strip()
+                logger.info(f"📦 Goodinfo 成交價 ➜ {stock_id} ➜ {price}")
+                return {"price": price}
+            else:
+                logger.warning(f"⚠️ Goodinfo 未找到成交價 ➜ stock_id={stock_id}")
+                return {"price": "查無"}
+
+    except Exception as e:
+        logger.exception(f"❌ Goodinfo 查價失敗 ➜ {str(e)}")
+        return {"price": "查無"}
 
 async def get_goodinfo_name(stock_id: str) -> str:
     """
