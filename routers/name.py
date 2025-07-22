@@ -8,6 +8,23 @@ from routers.goodinfo import get_goodinfo_industry
 
 from routers.stock import get_stock_info
 
+def get_stock_name(stock_id: str, source: str = "twse") -> str:
+
+    logger.info(f"🔍 get_stock_name ➜ stock_id={stock_id}, source={source}")
+    stock_id = str(stock_id).strip()
+
+    if not stock_id:
+        return "查無"
+
+    source = source.lower()
+    if source == "twse":
+        return get_twse_name(stock_id)
+    elif source == "goodinfo":
+        return get_goodinfo_name(stock_id)
+    else:
+        logger.warning(f"⚠️ 未知來源 ➜ {source}")
+        return "查無"
+
 """ 
 async def reply_stock_identity(text: str) -> str:
     """
@@ -604,20 +621,5 @@ def reverse_name_lookup(name: str, source: str = "twse") -> str:
 
     return "查無"
 """
-def get_stock_name(stock_id: str, source: str = "twse") -> str:
 
-    logger.info(f"🔍 get_stock_name ➜ stock_id={stock_id}, source={source}")
-    stock_id = str(stock_id).strip()
-
-    if not stock_id:
-        return "查無"
-
-    source = source.lower()
-    if source == "twse":
-        return get_twse_name(stock_id)
-    elif source == "goodinfo":
-        return get_goodinfo_name(stock_id)
-    else:
-        logger.warning(f"⚠️ 未知來源 ➜ {source}")
-        return "查無"
 
