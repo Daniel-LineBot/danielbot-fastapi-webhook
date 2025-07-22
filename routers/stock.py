@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open_range  # ✅ 引入時間模組 #20250718 added.
 from routers.time import twse_status, get_tw_time_str #20250718 added.
 #from routers.name import get_stock_name  #20250721 added.
-from routers.goodinfo import get_goodinfo_price
+from routers.goodinfo import get_goodinfo_price_robust #20250722 added.
 
 #20250718_v2
 
@@ -184,7 +184,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         # ✅ fallback 判斷區塊要在 if 裡 ➜ 多縮一層
         if result.get("price") == "-" or not result.get("price"):
             logger.warning("TWSE price missing ➜ fallback to Goodinfo")
-            fallback = await get_goodinfo_price(stock_id)
+            fallback = await get_goodinfo_price_robust(stock_id)
             result["price"] = fallback.get("price", "查無")
             result["成交價"] = result["price"]
             result["提示"] = "📦 TWSE price 異常 ➜ fallback Goodinfo"
