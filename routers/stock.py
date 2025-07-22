@@ -15,8 +15,8 @@ from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open
 from routers.time import twse_status, get_tw_time_str #20250718 added.
 from routers.goodinfo import get_goodinfo_price_robust #20250722 added.
 from routers.goodinfo import get_yahoo_price
-from routers.name import get_stock_name_industry
-#20250718_v2
+#from routers.name import get_stock_name_industry
+#20250723_v1
 
 
 router = APIRouter()
@@ -319,28 +319,6 @@ async def get_historical_data(stock_id: str, date: str):
                     if fallback_used:
                         result["提示"] = f"{original_query_date.strftime('%Y/%m/%d')} 無資料 ➜ 已回覆 {target_date.strftime('%Y/%m/%d')} 資料"
                     return result
-             """
-                if row_date_str == twse_target_date:
-                    logger.info(f"[TWSE 歷史] 成交價 ➜ {row[6]} ➜ 資料日 ➜ {twse_target_date}")
-                #    name_info = await get_stock_name_industry(stock_id)                    
-                    result = {
-                        "資料來源": "歷史盤後",
-                        "股票代號": stock_id,
-                       # "股票名稱": name_info.get("股票名稱"),
-                       # "產業別": name_info.get("產業別"),
-                        "原始查詢日期": original_query_date.strftime("%Y%m%d"),
-                        "實際回傳日期": target_date.strftime("%Y%m%d"),
-                        "開盤": row[3],
-                        "最高": row[4],
-                        "最低": row[5],
-                        "收盤": row[6],
-                        "成交價": row[6],
-                        "成交量(張)": row[1],
-}
-                    if fallback_used:
-                        result["提示"] = f"{original_query_date.strftime('%Y/%m/%d')} 無資料 ➜ 已回覆 {target_date.strftime('%Y/%m/%d')} 資料"
-                    return result
-                    """
 
         fallback_used = True
         target_date -= timedelta(days=1)
