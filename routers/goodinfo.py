@@ -10,10 +10,6 @@ headers = {
     "Referer": "https://goodinfo.tw/",
     "Accept": "text/html"
 }
-# routers/goodinfo.py
-import httpx
-import re
-from loguru import logger
 
 async def get_goodinfo_price(stock_id: str) -> dict:
     """
