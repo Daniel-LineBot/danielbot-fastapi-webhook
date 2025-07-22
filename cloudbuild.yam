@@ -1,0 +1,9 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/neat-planet-464202-j1/danielbot-fastapi-webhook', '.']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [
+      'run', 'deploy', 'danielbot-fastapi-webhook',
+      '--image', 'gcr.io/neat-planet-464202-j1/danielbot-fastapi-webhook',
+      '--region=asia-east1'
+    ]
