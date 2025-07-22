@@ -15,7 +15,7 @@ from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open
 from routers.time import twse_status, get_tw_time_str #20250718 added.
 from routers.goodinfo import get_goodinfo_price_robust #20250722 added.
 from routers.goodinfo import get_yahoo_price
-#from routers.name import get_stock_name_industry
+from routers.name import get_stock_name_industry
 #20250723_v1
 
 
