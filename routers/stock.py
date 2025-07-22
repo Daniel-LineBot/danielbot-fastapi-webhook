@@ -211,7 +211,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         logger.info(f"📉 台股目前不在盤中 ➜ 模式：{status['mode']} ➜ 時間：{status['now']}")
         today = get_tw_time_str()
         logger.info(f"[TWSE fallback] fallback 查詢今日盤後 ➜ {today}")
-    
+     """
         result = await get_historical_data(stock_id, today)
     
         # ✅ fallback 判斷 ➜ 若 TWSE 歷史資料查無成交價 ➜ fallback Goodinfo + Yahoo
@@ -238,7 +238,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         today = get_tw_time_str()
         logger.info(f"[TWSE fallback] fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
-     """
+    
 def fallback_trace():
     """自動 logs 判斷 fallback 模式與台股狀態"""
     status = twse_status()
