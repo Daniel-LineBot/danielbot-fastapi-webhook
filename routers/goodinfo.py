@@ -15,7 +15,18 @@ headers = {
     "Accept": "text/html"
 }
 
+def get_yahoo_price(stock_id: str) -> dict:
+    ticker = Ticker(stock_id + ".TW")  # 台股 ticker
+    info = ticker.info
 
+    return {
+        "price": str(info.get("currentPrice", "查無")),
+        "名稱": info.get("longName", "N/A"),
+        "產業別": info.get("industry", "N/A"),
+        "開盤": str(info.get("open", "-")),
+        "source": "Yahoo"
+    }
+"""
 def get_yahoo_price(stock_id: str) -> dict:
     try:
         ticker = Ticker(f"{stock_id}.TW")
@@ -25,7 +36,7 @@ def get_yahoo_price(stock_id: str) -> dict:
     except Exception as e:
         logger.warning(f"⚠️ Yahoo price 查詢失敗 ➜ {str(e)}")
         return {"price": "查無"}
-
+"""
 async def get_goodinfo_price_robust(stock_id: str) -> dict:
     """
     fallback Goodinfo 查成交價 ➜ 改用 <th>成交</th><td>xx.xx</td> 結構 ➕ title 備援
