@@ -22,8 +22,6 @@ from routers.name import get_stock_name_industry
 
 from routers.twse import twse_is_valid_id
 
-from routers.yahoo import get_yahoo_price
-
 #20250723_v1
 
 
