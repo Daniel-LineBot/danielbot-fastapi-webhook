@@ -15,6 +15,7 @@ from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open
 from routers.time import twse_status, get_tw_time_str #20250718 added.
 #from routers.name import get_stock_name  #20250721 added.
 from routers.goodinfo import get_goodinfo_price_robust #20250722 added.
+from routers.goodinfo import get_yahoo_price
 
 #20250718_v2
 
@@ -180,17 +181,26 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
     if status["is_open"]:
         logger.info("📈 台股目前在盤中 ➜ 啟用即時查詢")
         result = await get_realtime_data(stock_id)
-    #0721 start modify
+
         # ✅ fallback 判斷區塊要在 if 裡 ➜ 多縮一層
         if result.get("price") == "-" or not result.get("price"):
             logger.warning("TWSE price missing ➜ fallback to Goodinfo")
             fallback = await get_goodinfo_price_robust(stock_id)
             result["price"] = fallback.get("price", "查無")
-            result["成交價"] = result["price"]
-            result["提示"] = "📦 TWSE price 異常 ➜ fallback Goodinfo"
             result["source"] = "goodinfo"
+            result["提示"] = "📦 TWSE price 異常 ➜ fallback Goodinfo"
+        
+            # ✅ 若 Goodinfo 也回 "查無" ➜ fallback Yahoo
+            if result["price"] == "查無":
+                yahoo = get_yahoo_price(stock_id)
+                result["price"] = yahoo.get("price", "查無")
+                if result["price"] != "查無":
+                    result["source"] = "yahoo"
+                    result["提示"] += " ➜ fallback Yahoo"
+        
+            result["成交價"] = result["price"]
             result["is_fallback"] = True
-      #0721 end modify
+         
         return result
     else:
         logger.info(f"📉 台股目前不在盤中 ➜ 模式：{status['mode']} ➜ 時間：{status['now']}")
