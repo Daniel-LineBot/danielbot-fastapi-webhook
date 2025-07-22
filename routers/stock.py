@@ -233,12 +233,12 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
     
         return result
      
-     ""
+     """
         logger.info(f"📉 台股目前不在盤中 ➜ 模式：{status['mode']} ➜ 時間：{status['now']}")
         today = get_tw_time_str()
         logger.info(f"[TWSE fallback] fallback 查詢今日盤後 ➜ {today}")
         return await get_historical_data(stock_id, today)
-     ""
+     """
 def fallback_trace():
     """自動 logs 判斷 fallback 模式與台股狀態"""
     status = twse_status()
