@@ -291,6 +291,37 @@ async def stock_payload(text: str) -> dict:
         "source": info.get("source"),
         "industry": info.get("industry")
     }
+async def stock_query_summary(text: str) -> dict:
+    """
+    一行取得 `{id, name, price, source, fallback_mode}` ➜ callback reply 可直接吃
+    """
+    info = await resolve_stock_input(text, full=True)
+
+    return {
+        "id": info.get("id", "查無"),
+        "name": info.get("name", "查無"),
+        "price": info.get("price", "查無"),
+        "source": info.get("source", "查無"),
+        "fallback_mode": info.get("fallback_mode", "查無")
+    }
+
+async def resolve_stock_source_chain(text: str) -> str:
+    """
+    回傳查詢流程語句 ➜ 例如：
+    「來源：TWSE ➜ fallback Goodinfo ➜ 查無」
+    """
+    trace = ["TWSE"]
+    info = await get_stock_profile(text, source="twse")
+    if info.get("price") != "查無":
+        return f"來源：TWSE ➜ 成功"
+
+    trace.append("fallback Goodinfo")
+    info = await get_stock_profile(text, source="goodinfo")
+    if info.get("price") != "查無":
+        return f"來源：TWSE ➜ fallback Goodinfo ➜ 成功"
+
+    trace.append("查無")
+    return " ➜ ".join(["來源"] + trace)
 
 async def name_summary(text: str, source: str = "twse") -> dict:
     """
