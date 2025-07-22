@@ -16,7 +16,7 @@ headers = {
 }
 
 def get_yahoo_price(stock_id: str) -> dict:
-    ticker = Ticker(stock_id + ".TW")  # 台股 ticker
+    ticker = Ticker(stock_id + ".TW")  # 台股 ticker 
     info = ticker.info
 
     return {
