@@ -5,7 +5,10 @@ WORKDIR /app
 
 # 複製依賴檔並安裝套件
 COPY requirements.txt .
+RUN echo "[CloudBuild] 開始安裝 requirements.txt"
 RUN pip install --no-cache-dir -r requirements.txt
+RUN echo "[CloudBuild] requirements 安裝完畢 ✅"
+
 
 # 複製剩餘程式碼
 COPY . .
