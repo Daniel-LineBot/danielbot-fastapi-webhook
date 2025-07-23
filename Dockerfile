@@ -2,7 +2,7 @@ FROM python:3.10-slim
 
 # 設定工作目錄 
 WORKDIR /app
-
+from yfinance import Ticker
 # 複製依賴檔並安裝套件
 COPY requirements.txt .
 RUN echo "[CloudBuild] 開始安裝 requirements.txt"
