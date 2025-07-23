@@ -11,8 +11,8 @@ from routers import webhook
 #from routers import stock
 
 app = FastAPI()
-#app.include_router(webhook.router)
-app.include_router(stock.router)
+app.include_router(webhook.router)
+#app.include_router(stock.router)
 
 print("✅ DanielBot webhook app 啟動中… FastAPI 已掛上 /webhook")
 print("📚 所有已掛載的路由：", app.routes)
