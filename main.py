@@ -79,3 +79,4 @@ async def copilot_nlu(req: NLURequest):
 print("✅ DanielBot webhook app 啟動中… FastAPI 已掛上 /webhook")
 print("📚 所有已掛載的路由：", app.routes)
 
+# [DanielBot] Clean fallback commit @ Wed Jul 23 08:50:18 UTC 2025
