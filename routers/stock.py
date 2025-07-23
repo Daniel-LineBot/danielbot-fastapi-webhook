@@ -351,8 +351,7 @@ async def get_fallback_price_and_name(stock_id: str, query_time: datetime) -> di
 
         if query_time.time() < time(14, 30):  # 盤中判定邏輯
             price_info = await get_stock_info(stock_id)
-        else:
-            from routers.historical import get_historical_data
+        else:            
             price_info = await get_historical_data(stock_id, query_time)
 
         result["成交價"] = price_info.get("成交價", "查無")
