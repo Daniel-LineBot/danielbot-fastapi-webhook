@@ -1,3 +1,4 @@
+# [DanielBot] Clean fallback commit @ 2025-07-23 16:31
 # main.py 只需初始化 FastAPI 與掛載 router，不定義 webhook handler
 from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
