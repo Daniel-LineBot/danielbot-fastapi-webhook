@@ -3,10 +3,6 @@ import httpx
 import re
 from loguru import logger
 
-#from yfinance import Ticker # For Yahoo 即時成交價
-
-
-
 GOODINFO_URL = "https://goodinfo.tw/StockInfo/StockDetail.asp?STOCK_ID={stock_id}"
 
 headers = {
