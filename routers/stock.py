@@ -200,12 +200,13 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
         result = await get_historical_data(stock_id, today)
     
         if not result.get("成交價") or result["成交價"] == "查無":
-            logger.warning("TWSE 歷史資料無成交價 ➜ fallback Goodinfo ➜ fallback Yahoo")
+            logger.warning("TWSE 歷史資料無成交價 ➜ fallback Goodinfo")
     
             fallback = await get_goodinfo_price_robust(stock_id)
             result["成交價"] = fallback.get("price", "查無")
             result["提示"] = "📦 TWSE 歷史查無 ➜ fallback Goodinfo"
-    
+            result["資料來源"] = result.get("資料來源", "fallback補值")
+            result["is_fallback"] = True
         return result
 
 def fallback_trace():
