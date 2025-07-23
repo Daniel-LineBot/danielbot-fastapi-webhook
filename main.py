@@ -7,10 +7,10 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 
 from routers import webhook
-from routers import stock
+#from routers import stock
 
 app = FastAPI()
-app.include_router(webhook.router)
+#app.include_router(webhook.router)
 app.include_router(stock.router)
 
 print("✅ DanielBot webhook app 啟動中… FastAPI 已掛上 /webhook")
