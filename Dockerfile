@@ -15,6 +15,7 @@ COPY . .
 
 # 正確啟動 FastAPI 應用
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["sh", "-c", "echo '[DanielBot] Container booting...' && uvicorn main:app --host 0.0.0.0 --port 8080"]
 
 #ENV_FILE=.env  #環境變數如果要用.env就打開註解
 
