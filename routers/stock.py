@@ -14,7 +14,6 @@ from bs4 import BeautifulSoup
 from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open_range  # ✅ 引入時間模組 #20250718 added.
 from routers.time import twse_status, get_tw_time_str #20250718 added.
 from routers.goodinfo import get_goodinfo_price_robust #20250722 added.
-from routers.goodinfo import get_yahoo_price
 from routers.name import get_stock_name_industry
 from routers.twse import twse_is_valid_id
 
@@ -190,18 +189,7 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
             result["price"] = fallback.get("price", "查無")
             result["source"] = "goodinfo"
             result["提示"] = "📦 TWSE price 異常 ➜ fallback Goodinfo"
-        
-            # ✅ 若 Goodinfo 也回 "查無" ➜ fallback Yahoo
-            if result["price"] == "查無":
-                yahoo = get_yahoo_price(stock_id)
-                result["price"] = yahoo.get("price", "查無")
-                if result["price"] != "查無":
-                    result["source"] = "yahoo"
-                    result["提示"] += " ➜ fallback Yahoo"
-        
-            result["成交價"] = result["price"]
-            result["is_fallback"] = True
-         
+                
         return result
     else:
    
@@ -217,15 +205,6 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
             fallback = await get_goodinfo_price_robust(stock_id)
             result["成交價"] = fallback.get("price", "查無")
             result["提示"] = "📦 TWSE 歷史查無 ➜ fallback Goodinfo"
-    
-            if result["成交價"] == "查無":
-                yahoo = get_yahoo_price(stock_id)
-                result["成交價"] = yahoo.get("price", "查無")
-                if result["成交價"] != "查無":
-                    result["提示"] += " ➜ fallback Yahoo"
-    
-            result["資料來源"] = result.get("資料來源", "fallback補值")
-            result["is_fallback"] = True
     
         return result
 
@@ -387,7 +366,7 @@ async def get_fallback_price_and_name(stock_id: str, query_time: datetime) -> di
 
 async def fallback_trace_chain(stock_id: str):
     """
-    logs trace 成交價查詢流程 ➜ TWSE ➜ Goodinfo ➜ Yahoo ➜ TWSE歷史
+    logs trace 成交價查詢流程 ➜ TWSE ➜ Goodinfo ➜ TWSE歷史
     """
     stock_id = str(stock_id).strip()
     twse_price = await get_stock_info(stock_id)
@@ -400,10 +379,5 @@ async def fallback_trace_chain(stock_id: str):
         logger.info(f"🔁 TWSE 失敗 ➜ fallback Goodinfo 命中 ➜ {goodinfo.get('成交價')}")
         return goodinfo
 
-    yahoo = get_yahoo_price(stock_id)  # 非 async
-    if yahoo.get("成交價") != "查無":
-        logger.info(f"🔁 fallback Goodinfo ➜ fallback Yahoo 命中 ➜ {yahoo.get('成交價')}")
-        return yahoo
-
-    logger.warning(f"⚠️ TWSE / Goodinfo / Yahoo 全部失敗 ➜ 準備進入 TWSE 歷史查詢")
+    logger.warning(f"⚠️ TWSE / Goodinfo  ➜ 準備進入 TWSE 歷史查詢")
     return {"成交價": "查無", "資料來源": "全部查詢失敗"}
