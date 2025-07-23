@@ -330,7 +330,7 @@ async def get_historical_data(stock_id: str, date: str):
     return {
         "error": f"{date} 起往前 7 日查無交易紀錄 ➜ 可能遇連假或尚未釋出資料"
     }
-
+"""
 async def get_fallback_price_and_name(stock_id: str, query_time: datetime) -> dict:
     """
     依照時間判斷 ➜ 查即時 or 盤後 ➜ 搭配 fallback chain 補上 price + metadata
@@ -381,3 +381,4 @@ async def fallback_trace_chain(stock_id: str):
 
     logger.warning(f"⚠️ TWSE / Goodinfo  ➜ 準備進入 TWSE 歷史查詢")
     return {"成交價": "查無", "資料來源": "全部查詢失敗"}
+"""
