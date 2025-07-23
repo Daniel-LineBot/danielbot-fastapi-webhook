@@ -13,11 +13,7 @@ import requests
 from bs4 import BeautifulSoup
 from routers.time import get_tw_time, get_tw_time_str, is_market_open, twse_open_range  # ✅ 引入時間模組 #20250718 added.
 from routers.time import twse_status, get_tw_time_str #20250718 added.
-from routers.goodinfo import get_goodinfo_price_robust #20250722 added.
-from routers.name import get_stock_name_industry
-from routers.twse import twse_is_valid_id
-
-#20250723_v1
+#20250718_v2
 
 
 router = APIRouter()
@@ -180,35 +176,12 @@ async def get_stock_info(stock_id: str, date: Optional[Union[str, None]] = None)
     status = twse_status()
     if status["is_open"]:
         logger.info("📈 台股目前在盤中 ➜ 啟用即時查詢")
-        result = await get_realtime_data(stock_id)
-
-        # ✅ fallback 判斷區塊要在 if 裡 ➜ 多縮一層
-        if result.get("price") == "-" or not result.get("price"):
-            logger.warning("TWSE price missing ➜ fallback to Goodinfo")
-            fallback = await get_goodinfo_price_robust(stock_id)
-            result["price"] = fallback.get("price", "查無")
-            result["source"] = "goodinfo"
-            result["提示"] = "📦 TWSE price 異常 ➜ fallback Goodinfo"
-                
-        return result
+        return await get_realtime_data(stock_id)
     else:
-   
-        logger.info(f"📉 台股目前不在盤中 ➔ 模式：{status['mode']} ➔ 時間：{status['now']}")
+        logger.info(f"📉 台股目前不在盤中 ➜ 模式：{status['mode']} ➜ 時間：{status['now']}")
         today = get_tw_time_str()
-        logger.info(f"[TWSE fallback] fallback 查詢今日盤後 ➔ {today}")
-    
-        result = await get_historical_data(stock_id, today)
-    
-        if not result.get("成交價") or result["成交價"] == "查無":
-            logger.warning("TWSE 歷史資料無成交價 ➜ fallback Goodinfo")
-    
-            fallback = await get_goodinfo_price_robust(stock_id)
-            result["成交價"] = fallback.get("price", "查無")
-            result["提示"] = "📦 TWSE 歷史查無 ➜ fallback Goodinfo"
-            result["資料來源"] = result.get("資料來源", "fallback補值")
-            result["is_fallback"] = True
-        return result
-
+        logger.info(f"[TWSE fallback] fallback 查詢今日盤後 ➜ {today}")
+        return await get_historical_data(stock_id, today)
 def fallback_trace():
     """自動 logs 判斷 fallback 模式與台股狀態"""
     status = twse_status()
@@ -309,7 +282,7 @@ async def get_historical_data(stock_id: str, date: str):
                     result = {
                         "資料來源": "歷史盤後",
                         "股票代號": stock_id,
-                      #  "股票名稱": get_stock_name(stock_id),  # ✅ 建議加這一行 0721 added                       
+                        "股票名稱": "查詢結果",
                         "原始查詢日期": original_query_date.strftime("%Y%m%d"),
                         "實際回傳日期": target_date.strftime("%Y%m%d"),
                         "開盤": row[3],
@@ -330,55 +303,3 @@ async def get_historical_data(stock_id: str, date: str):
     return {
         "error": f"{date} 起往前 7 日查無交易紀錄 ➜ 可能遇連假或尚未釋出資料"
     }
-"""
-async def get_fallback_price_and_name(stock_id: str, query_time: datetime) -> dict:
-    """
-    依照時間判斷 ➜ 查即時 or 盤後 ➜ 搭配 fallback chain 補上 price + metadata
-    """
-    stock_id = str(stock_id).strip()
-    result = {"股票代號": stock_id}
-
-    if not await twse_is_valid_id(stock_id):
-        result.update({"股票名稱": "格式錯誤", "產業別": "查無", "成交價": "查無"})
-        return result
-
-    try:
-        metadata = await get_stock_name_industry(stock_id)
-        result.update({
-            "股票名稱": metadata.get("股票名稱", "查無"),
-            "產業別": metadata.get("產業別", "查無"),
-        })
-
-        if query_time.time() < time(14, 30):  # 盤中判定邏輯
-            price_info = await get_stock_info(stock_id)
-        else:            
-            price_info = await get_historical_data(stock_id, query_time)
-
-        result["成交價"] = price_info.get("成交價", "查無")
-        result["資料來源"] = price_info.get("資料來源", "查無")
-        return result
-    except Exception as e:
-        logger.exception(f"❌ fallback 成交價查詢失敗 ➜ {str(e)}")
-        result["成交價"] = "查無"
-        result["資料來源"] = "查詢失敗"
-        return result
-
-
-async def fallback_trace_chain(stock_id: str):
-    """
-    logs trace 成交價查詢流程 ➜ TWSE ➜ Goodinfo ➜ TWSE歷史
-    """
-    stock_id = str(stock_id).strip()
-    twse_price = await get_stock_info(stock_id)
-    if twse_price.get("成交價") != "查無":
-        logger.info(f"🔍 TWSE 即時成交價命中 ➜ {twse_price.get('成交價')}")
-        return twse_price
-
-    goodinfo = await get_goodinfo_price_robust(stock_id)
-    if goodinfo.get("成交價") != "查無":
-        logger.info(f"🔁 TWSE 失敗 ➜ fallback Goodinfo 命中 ➜ {goodinfo.get('成交價')}")
-        return goodinfo
-
-    logger.warning(f"⚠️ TWSE / Goodinfo  ➜ 準備進入 TWSE 歷史查詢")
-    return {"成交價": "查無", "資料來源": "全部查詢失敗"}
-"""
