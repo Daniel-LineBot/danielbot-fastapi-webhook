@@ -13,7 +13,16 @@ def reply_bubble_builder(response: dict) -> BubbleContainer:
     stock_id = response.get("stock_id") or "未知代碼"
     price = response.get("price") or "--"
     change = response.get("change") or "--"
-    source = response.get("source") or "fallback"
+    #source = response.get("source") or "fallback"
+    source = response.get("source", "TWSE")
+    if "html" in source.lower():
+        source += " 🔍 HTML爬蟲"
+    elif "api" in source.lower():
+        source += " ⚡ TWSE API"
+    elif "fallback" in source.lower():
+        source += " ❓ fallback來源"
+    elif source not in ["TWSE", "MOPS", "Goodinfo"]:
+        source += " ⚠️ 非預設來源"
     timestamp = response.get("timestamp") or "--"
 
     bubble = BubbleContainer(
