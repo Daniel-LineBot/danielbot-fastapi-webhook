@@ -64,20 +64,5 @@ async def router_price_autoselector(stock_id: str):
         "fallback階層": "無回應"
     })
 
-@router.get("/ai-stock/price/{stock_id}")
-async def router_price_autoselector(stock_id: str):
-    for fn, level in [
-        (get_price_twse, "TWSE"),
-        (get_price_publicinfo, "公開資訊觀測站"),
-        (get_price_goodinfo, "Goodinfo")
-    ]:
-        result = await fn(stock_id)
-        if result and "收盤" in result:
-            result["fallback階層"] = level
-            return ai_stock_response_formatter(result)
 
-    return ai_stock_response_formatter({
-        "error": f"{stock_id} 查價失敗 ➜ 全部來源炸掉",
-        "fallback階層": "無回應"
-    })
 
