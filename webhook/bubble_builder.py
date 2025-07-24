@@ -1,6 +1,10 @@
 from linebot.models import BubbleContainer, BoxComponent, TextComponent, FlexSendMessage
 
 def reply_bubble_builder(response: dict) -> BubbleContainer:
+    ALLOWED_SOURCE = ["TWSE", "Goodinfo", "MOPS"]
+    if response.get("source") not in ALLOWED_SOURCE:
+        response["source"] += " ⚠️ 非預設來源"
+
     stock_id = response.get("stock_id", "未知代碼")
     price = response.get("price", "--")
     change = response.get("change", "--")
@@ -20,3 +24,4 @@ def reply_bubble_builder(response: dict) -> BubbleContainer:
         )
     )
     return bubble
+
