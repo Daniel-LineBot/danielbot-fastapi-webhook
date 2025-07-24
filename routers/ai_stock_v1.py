@@ -44,6 +44,14 @@ async def price_lookup(stock_id: str):
 
 # routers/ai_stock_v1.py ➜ extend router trace
 
+@router.get("/ai-stock/price/fallback/{stock_id}")
+@log_trace("Fallback Router")
+async def price_fallback(stock_id: str):
+    metadata = await router_price_autoselector(stock_id)
+    fallback_trace_monitor(stock_id, metadata)
+    logger.info(f"✅ Bubble builder fallback metadata ➜ {metadata}")
+    return metadata
+
 
 @router.get("/ai-stock/price/{stock_id}")
 async def router_price_autoselector(stock_id: str):
