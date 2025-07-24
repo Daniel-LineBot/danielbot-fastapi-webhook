@@ -17,6 +17,7 @@ from routers.parser import parse_eps_pe_industry
 #from routers.twse_selector import twse_router_selector
 
 from routers.router_fallback_monitor import fallback_trace_monitor
+from webhook.log_trace_decorator import log_trace
 
 import logging
 logger = logging.getLogger("uvicorn")
