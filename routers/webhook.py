@@ -33,7 +33,7 @@ async def webhook(request: Request):
         return PlainTextResponse("Invalid signature", status_code=400)
 
     return PlainTextResponse("OK")
-
+"""
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
     try:
@@ -95,3 +95,4 @@ async def process_event(event: MessageEvent):
         logger.info(f"✅ 準備回覆 LINE ➜ token={event.reply_token}, text={reply_text}")
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
+"""
