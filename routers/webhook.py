@@ -8,6 +8,10 @@ import logging
 import re
 from datetime import datetime
 from asyncio import create_task
+
+# ✅ 這一行非常重要 ➜ 必須 import handler (含 @handler.add)
+from webhook.linebot_event_handler import handler
+
 #...
 
 router = APIRouter()
