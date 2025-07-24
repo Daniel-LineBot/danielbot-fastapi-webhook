@@ -26,7 +26,12 @@ def reply_bubble_builder(response: dict) -> BubbleContainer:
     elif source not in ["TWSE", "MOPS", "Goodinfo"]:
         source += " ⚠️ 非預設來源"
     timestamp = response.get("timestamp") or "--"
+    # 欄位驗證
+    if not price or not change or not timestamp:
+        logger.warning(f"⛔ Bubble builder可能炸 ➜ price={price}, change={change}, timestamp={timestamp}")
 
+
+    
     bubble = BubbleContainer(
         body=BoxComponent(
             layout="vertical",
