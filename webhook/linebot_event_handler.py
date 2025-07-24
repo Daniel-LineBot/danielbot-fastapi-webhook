@@ -1,7 +1,8 @@
 import requests
 from linebot.models import FlexSendMessage, MessageEvent, TextMessage
 import logging
-
+from webhook.stock_utils import name_to_id
+from webhook.bubble_builder import reply_bubble_builder
 
 logger = logging.getLogger("uvicorn")
 BASE_URL = "https://danielbot-fastapi-webhook-437280480144.asia-east1.run.app"  # ✅ Cloud Run 的 webhook URL
