@@ -26,6 +26,30 @@ def bind_handler(handler):
                 return
 
             url = f"{BASE_URL}/ai-stock/price/{stock_id}"
+            resp = requests.get(url)
+            
+            if resp.status_code != 200 or not resp.text.strip():
+                logger.warning(f"❌ 查價 API 回應異常 ➜ status: {resp.status_code} ➜ body: {resp.text}")
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text=f"查價失敗 ➔ 無法取得「{stock_id}」資料，請稍後再試")
+                )
+                return
+            
+            response = resp.json()
+            bubble = reply_bubble_builder(response)
+            
+            logger.info(f"📦 Bubble reply trigger ➜ stock_id: {stock_id} ➜ price: {response.get('price', '--')}")
+            
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text=f"{stock_id} 查價結果", contents=bubble)
+            )
+            
+            logger.info(f"✅ reply 查價完成 ➜ 回覆股票代號 {stock_id}")
+
+"""
+            url = f"{BASE_URL}/ai-stock/price/{stock_id}"
             response = requests.get(url).json()
             bubble = reply_bubble_builder(response)
 
@@ -37,6 +61,6 @@ def bind_handler(handler):
                 FlexSendMessage(alt_text=f"{stock_id} 查價結果", contents=bubble)
             )
             # ✅ 完整 reply 成功 trace
-            logger.info(f"✅ reply 查價完成 ➜ 回覆股票代號 {stock_id}")  # ✅ reply trace
+            logger.info(f"✅ reply 查價完成 ➜ 回覆股票代號 {stock_id}")  # ✅ reply trace"""
 
-
+"""
