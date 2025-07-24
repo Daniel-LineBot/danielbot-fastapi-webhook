@@ -47,20 +47,3 @@ def bind_handler(handler):
             )
             
             logger.info(f"✅ reply 查價完成 ➜ 回覆股票代號 {stock_id}")
-
-"""
-            url = f"{BASE_URL}/ai-stock/price/{stock_id}"
-            response = requests.get(url).json()
-            bubble = reply_bubble_builder(response)
-
-            # ✅ Bubble builder 完成 trace
-            logger.info(f"📦 Bubble reply trigger ➜ stock_id: {stock_id} ➜ price: {price}")
-            
-            line_bot_api.reply_message(
-                event.reply_token,
-                FlexSendMessage(alt_text=f"{stock_id} 查價結果", contents=bubble)
-            )
-            # ✅ 完整 reply 成功 trace
-            logger.info(f"✅ reply 查價完成 ➜ 回覆股票代號 {stock_id}")  # ✅ reply trace"""
-
-"""
