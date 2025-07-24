@@ -1,15 +1,20 @@
 from linebot.models import BubbleContainer, BoxComponent, TextComponent, FlexSendMessage
 
+import logging, json
+logger = logging.getLogger("uvicorn")
+
 def reply_bubble_builder(response: dict) -> BubbleContainer:
+    # ✅ fallback source 檢查器
     ALLOWED_SOURCE = ["TWSE", "Goodinfo", "MOPS"]
     if response.get("source") not in ALLOWED_SOURCE:
         response["source"] += " ⚠️ 非預設來源"
 
-    stock_id = response.get("stock_id", "未知代碼")
-    price = response.get("price", "--")
-    change = response.get("change", "--")
-    source = response.get("source", "fallback")
-    timestamp = response.get("timestamp", "--")
+    # ✅ 欄位 validator ➜ 避免 Bubble builder 爆炸
+    stock_id = response.get("stock_id") or "未知代碼"
+    price = response.get("price") or "--"
+    change = response.get("change") or "--"
+    source = response.get("source") or "fallback"
+    timestamp = response.get("timestamp") or "--"
 
     bubble = BubbleContainer(
         body=BoxComponent(
@@ -23,5 +28,9 @@ def reply_bubble_builder(response: dict) -> BubbleContainer:
             ]
         )
     )
+
+    # ✅ Bubble preview logs trace
+    logger.info(f"📦 Bubble preview JSON ➜ {json.dumps(bubble.as_json(), ensure_ascii=False)}")
     return bubble
+
 
