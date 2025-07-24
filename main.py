@@ -1,4 +1,3 @@
-# [DanielBot] Clean fallback commit @ 2025-07-23 16:31
 # main.py 只需初始化 FastAPI 與掛載 router，不定義 webhook handler
 from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
@@ -8,11 +7,11 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 
 from routers import webhook
-#from routers import stock
+from routers import ai_stock_v1
 
 app = FastAPI()
 app.include_router(webhook.router)
-#app.include_router(stock.router)
+app.include_router(ai_stock_v1.router)
 
 print("✅ DanielBot webhook app 啟動中… FastAPI 已掛上 /webhook")
 print("📚 所有已掛載的路由：", app.routes)
