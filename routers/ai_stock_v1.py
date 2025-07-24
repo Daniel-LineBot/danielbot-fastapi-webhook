@@ -15,6 +15,9 @@ from routers.parser import parse_eps_pe_industry
 from routers.parser import parse_eps_pe_industry
 
 #from routers.twse_selector import twse_router_selector
+
+from routers.router_fallback_monitor import fallback_trace_monitor
+
 import logging
 logger = logging.getLogger("uvicorn")
 
@@ -23,14 +26,15 @@ router = APIRouter()
 @router.get("/ai-stock/ping")
 async def ping():
     return {"status": "ai_stock_v1 ready"}
-
+"""
 @router.get("/ai-stock/price/{stock_id}")
 async def price_lookup(stock_id: str):
     metadata = await twse_router_selector(stock_id)
     logger.info(f"✅ TWSE查價完成 ➜ metadata: {metadata}")
     return metadata
-
+"""
 @router.get("/ai-stock/price/{stock_id}")
+@log_trace("Callback Router ➜ selector")
 async def price_lookup(stock_id: str):
     metadata = await router_price_autoselector(stock_id)
     logger.info(f"✅ LINBot查價完成 ➜ metadata: {metadata}")
