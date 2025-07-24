@@ -40,7 +40,8 @@ def bind_handler(handler):
             bubble = reply_bubble_builder(response)
             
             logger.info(f"📦 Bubble reply trigger ➜ stock_id: {stock_id} ➜ price: {response.get('price', '--')}")
-            
+            logger.info(f"📦 LINE Flex Bubble送出中 ➜ stock_id: {stock_id}")
+
             line_bot_api.reply_message(
                 event.reply_token,
                 FlexSendMessage(alt_text=f"{stock_id} 查價結果", contents=bubble)
