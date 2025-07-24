@@ -14,7 +14,7 @@ from routers.parser import parse_eps_pe_industry
 
 from routers.parser import parse_eps_pe_industry
 
-from routers.twse_selector import twse_router_selector
+#from routers.twse_selector import twse_router_selector
 import logging
 logger = logging.getLogger("uvicorn")
 
