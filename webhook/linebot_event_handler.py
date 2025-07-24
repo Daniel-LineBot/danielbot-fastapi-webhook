@@ -11,6 +11,7 @@ BASE_URL = "https://danielbot-fastapi-webhook-437280480144.asia-east1.run.app"  
 
 def bind_handler(handler):
     @handler.add(MessageEvent, message=TextMessage)
+    @log_trace("LINE Callback Handler")
     def handle_message(event):
         text = event.message.text.strip()
         logger.info(f"✅ LINE callback 觸發 ➜ 訊息：{text}")  # ✅ callback trace
