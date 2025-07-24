@@ -23,13 +23,13 @@ router = APIRouter()
 @router.get("/ai-stock/ping")
 async def ping():
     return {"status": "ai_stock_v1 ready"}
-"""
+
 @router.get("/ai-stock/price/{stock_id}")
 async def price_lookup(stock_id: str):
     metadata = await twse_router_selector(stock_id)
     logger.info(f"✅ TWSE查價完成 ➜ metadata: {metadata}")
     return metadata
-"""
+
 @router.get("/ai-stock/price/{stock_id}")
 async def price_lookup(stock_id: str):
     metadata = await router_price_autoselector(stock_id)
