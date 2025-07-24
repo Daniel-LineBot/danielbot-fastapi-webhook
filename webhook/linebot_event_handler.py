@@ -1,13 +1,11 @@
 import requests
 from linebot.models import FlexSendMessage, MessageEvent, TextMessage
 import logging
-
 logger = logging.getLogger("uvicorn")
+BASE_URL = "https://danielbot-fastapi-webhook-437280480144.asia-east1.run.app"  # ✅ Cloud Run 的 webhook URL
 
 
 
-import logging
-logger = logging.getLogger("uvicorn")
 
 def bind_handler(handler):
     @handler.add(MessageEvent, message=TextMessage)
