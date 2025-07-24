@@ -28,6 +28,12 @@ from routers.parser import parse_eps_pe_industry
 
 @router.get("/ai-stock/price/{stock_id}")
 async def router_price_autoselector(stock_id: str):
+ # 🟡 Step 1 ➜ 嘗試從 Firestore 快取讀資料
+    cached = await db.collection("ai_stock_metadata").document(stock_id).get()
+    if cached.exists:
+        cached_data = cached.to_dict()
+        cached_data["fallback階層"] = "Firestore Cache"
+        return ai_stock_response_formatter_enhanced(cached_data)    
     for fn, level in [
         (get_price_twse, "TWSE"),
         (get_price_publicinfo, "公開資訊觀測站"),
