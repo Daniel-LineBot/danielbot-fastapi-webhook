@@ -8,10 +8,7 @@ import logging
 import re
 from datetime import datetime
 from asyncio import create_task
-
 from webhook.linebot_event_handler import bind_handler  # ✅ import bind_handler 而非 handler！
-
-#...
 
 router = APIRouter()
 
@@ -20,7 +17,6 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
-
 bind_handler(handler)  # ✅ 註冊事件處理器
 
 logger = logging.getLogger("uvicorn")
