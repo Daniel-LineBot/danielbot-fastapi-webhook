@@ -12,6 +12,12 @@ from routers.formatter import ai_stock_response_formatter
 # routers/ai_stock_v1.py ➜ extend router trace
 from routers.parser import parse_eps_pe_industry
 
+from routers.parser import parse_eps_pe_industry
+
+from routers.twse_selector import twse_router_selector
+import logging
+logger = logging.getLogger("uvicorn")
+
 router = APIRouter()
 
 @router.get("/ai-stock/ping")
@@ -20,11 +26,13 @@ async def ping():
 
 @router.get("/ai-stock/price/{stock_id}")
 async def price_lookup(stock_id: str):
-    result = await get_price_twse(stock_id)
-    return result
+    metadata = await twse_router_selector(stock_id)
+    logger.info(f"✅ TWSE查價完成 ➜ metadata: {metadata}")
+    return metadata
+
 # routers/ai_stock_v1.py ➜ extend router trace
 
-from routers.parser import parse_eps_pe_industry
+
 
 @router.get("/ai-stock/price/{stock_id}")
 async def router_price_autoselector(stock_id: str):
