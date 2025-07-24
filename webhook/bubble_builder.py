@@ -1,8 +1,10 @@
 from linebot.models import BubbleContainer, BoxComponent, TextComponent, FlexSendMessage
-
+from webhook.log_trace_decorator import log_trace
 import logging, json
 logger = logging.getLogger("uvicorn")
 
+
+@log_trace("Bubble UI Builder")
 def reply_bubble_builder(response: dict) -> BubbleContainer:
     # ✅ fallback source 檢查器
     ALLOWED_SOURCE = ["TWSE", "Goodinfo", "MOPS"]
