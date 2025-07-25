@@ -14,27 +14,27 @@ async def get_twse_data(stock_id: str, date: str = "") -> dict:
     params = {
         "response": "html",
         "date": date_to_use,
-        "stockNo": stock_id
+        "stockNo": stock_id,
     }
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(url, params=params)
         soup = BeautifulSoup(resp.text, "html.parser")
         table = soup.find("table")
+        rows = table.find_all("tr")[2:] if table else []
 
         # 🧨 fallback: 查不到資料表就回查昨天
-        if (not table or len(table.find_all("tr")[2:]) == 0) and not date:
-            # fallback 查昨天            
+        if not rows and not date:
             yesterday = (datetime.today() - timedelta(days=1)).strftime("%Y%m%d")
             params["date"] = yesterday
             resp = await client.get(url, params=params)
             soup = BeautifulSoup(resp.text, "html.parser")
             table = soup.find("table")
+            rows = table.find_all("tr")[2:] if table else []
 
-        if not table:
-            return {"error": "TWSE查詢失敗 ➜ 找不到資料表"}
+        if not rows:
+            return {"error": "TWSE查詢失敗 ➜ 找不到資料或資料為空"}
 
-        rows = table.find_all("tr")[2:]  # 跳過表頭
         for row in reversed(rows):
             cells = row.find_all("td")
             if len(cells) >= 7:
@@ -46,7 +46,7 @@ async def get_twse_data(stock_id: str, date: str = "") -> dict:
                     "收盤": cells[4].text.strip(),
                     "漲跌": cells[5].text.strip(),
                     "成交量": cells[6].text.strip(),
-                    "來源": "TWSE"
+                    "來源": "TWSE",
                 }
 
         return {"error": "TWSE無法解析最新成交資料"}
