@@ -3,12 +3,17 @@
 import httpx
 from bs4 import BeautifulSoup
 
+from datetime import datetime, timedelta, date
+import calendar
+
+
 
 async def get_twse_data(stock_id: str, date: str = "") -> dict:
     url = "https://www.twse.com.tw/zh/page/trading/exchange/STOCK_DAY.html"
+    date_to_use = date or datetime.today().strftime("%Y%m%d")
     params = {
         "response": "html",
-        "date": date,
+        "date": date_to_use,
         "stockNo": stock_id
     }
 
@@ -16,6 +21,15 @@ async def get_twse_data(stock_id: str, date: str = "") -> dict:
         resp = await client.get(url, params=params)
         soup = BeautifulSoup(resp.text, "html.parser")
         table = soup.find("table")
+
+        # 🧨 fallback: 查不到資料表就回查昨天
+        if not table and not date:
+            yesterday = (datetime.today() - timedelta(days=1)).strftime("%Y%m%d")
+            params["date"] = yesterday
+            resp = await client.get(url, params=params)
+            soup = BeautifulSoup(resp.text, "html.parser")
+            table = soup.find("table")
+
         if not table:
             return {"error": "TWSE查詢失敗 ➜ 找不到資料表"}
 
@@ -35,6 +49,8 @@ async def get_twse_data(stock_id: str, date: str = "") -> dict:
                 }
 
         return {"error": "TWSE無法解析最新成交資料"}
+
+
 
 
 async def get_price_twse(stock_id: str) -> dict:
