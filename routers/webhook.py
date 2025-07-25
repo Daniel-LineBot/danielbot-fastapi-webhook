@@ -19,6 +19,8 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 #bind_handler(handler)  # ✅ 註冊事件處理器
 handler = bind_handler(handler)  # ✅ 一釘：要覆蓋 handler！
+if not hasattr(handler, "handle"):
+    logger.error("❌ handler 尚未綁定 ➜ Webhook 無法處理 LINE 訊息")
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
