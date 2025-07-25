@@ -9,8 +9,10 @@ import re
 from datetime import datetime
 from asyncio import create_task
 
-
 from routers.ai_stock_v1 import get_stock_info  # ✅ 改用整合模組 
+
+from utils.fallback_chain import query_stock_with_fallbacks
+
 
 router = APIRouter()
 
@@ -34,7 +36,25 @@ async def webhook(request: Request):
         logger.warning("❌ LINE Webhook Signature 驗證失敗")
         return PlainTextResponse("Invalid signature", status_code=400)
 
-    return PlainTextResponse("OK")
+    # 假設你已從 event 中抽出 stock_id（例如 "查詢 2330"）
+    stock_id = extract_stock_id_from_event(...)  # 自行定義解析方式
+    data = await query_stock_with_fallbacks(stock_id)
+
+    # callback reply（根據查詢結果）
+    if "error" in data:
+        reply_text = f"⚠️ 查詢失敗 ➜ {data['error']}"
+    else:
+        reply_text = (
+            f"📈 {stock_id} 查詢成功\n"
+            f"收盤：{data['收盤']}\n"
+            f"成交量：{data['成交量']}\n"
+            f"來源：{data['查詢來源']}\n"
+            f"查詢日期：{data['查詢日期']}"
+        )
+
+    # LINE 回覆處理邏輯...
+
+
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
@@ -97,3 +117,23 @@ async def process_event(event: MessageEvent):
         logger.info(f"✅ 準備回覆 LINE ➜ token={event.reply_token}, text={reply_text}")
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
+
+
+
+
+"""
+@router.post("/webhook")
+async def webhook(request: Request):
+    body = await request.body()
+    signature = request.headers.get("x-line-signature")
+
+    try:
+        handler.handle(body.decode("utf-8"), signature)
+    except InvalidSignatureError:
+        logger.warning("❌ LINE Webhook Signature 驗證失敗")
+        return PlainTextResponse("Invalid signature", status_code=400)
+
+    return PlainTextResponse("OK")
+""""
+
+
