@@ -134,6 +134,6 @@ async def webhook(request: Request):
         return PlainTextResponse("Invalid signature", status_code=400)
 
     return PlainTextResponse("OK")
-""""
+"""
 
 
