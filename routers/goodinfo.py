@@ -3,7 +3,39 @@
 import httpx
 from bs4 import BeautifulSoup
 
+async def get_price_goodinfo(stock_id: str) -> dict:
+    url = f"https://goodinfo.tw/StockInfo/StockDetail.asp?STOCK_ID={stock_id}"
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://goodinfo.tw"
+    }
 
+    async with httpx.AsyncClient(headers=headers) as client:
+        resp = await client.get(url)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        table = soup.find("table", class_="b1 p4_2 r_frame")
+
+        if not table:
+            return {"error": "Goodinfo 無資料 ➜ fallback失敗"}
+
+        rows = table.find_all("tr")
+        for row in rows:
+            cells = row.find_all("td")
+            if len(cells) >= 6:
+                return {
+                    "資料時間": cells[0].text.strip(),
+                    "股票名稱": cells[1].text.strip(),
+                    "收盤": cells[2].text.strip(),
+                    "漲跌幅": cells[3].text.strip(),
+                    "成交量": cells[4].text.strip(),
+                    "來源": "Goodinfo"
+                }
+
+        return {"error": "Goodinfo 資料解析失敗"}
+
+
+
+"""
 async def get_goodinfo_metadata(stock_id: str) -> dict:
     # TODO: 使用 aiohttp 抓取網頁、lxml 或 bs4 分析 HTML
     return {
@@ -40,3 +72,4 @@ async def get_price_goodinfo(stock_id: str) -> dict:
                 return result
 
         return {"error": "Goodinfo解析失敗 ➜ fallback炸掉"}
+"""
