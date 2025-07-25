@@ -9,10 +9,6 @@ import os
 from routers import webhook
 from routers import ai_stock_v1
 
-from webhook import linebot_event_handler  # ✅ 自動掛 handler，不需 include_router
-
-from routers import webhook  # ✅ 這支 router 實際接 webhook event
-
 app = FastAPI()
 app.include_router(ai_stock_v1.router)
 app.include_router(webhook.router)  # ✅ 只需掛 router，handler 會自動註冊
