@@ -63,7 +63,9 @@ async def process_event(event):
         await handle_text_message(event)
 
 async def handle_text_message(event):
-    stock_id = extract_stock_id(event.message.text)
+    query = extract_stock_query(event.message.text)
+    stock_id = query["stock_id"]
+    query_date = query.get("date")    
     data = await query_stock_with_fallbacks(stock_id)
 
     if "error" in data:
