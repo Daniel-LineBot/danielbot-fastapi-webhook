@@ -8,7 +8,9 @@ import logging
 import re
 from datetime import datetime
 from asyncio import create_task
-from webhook.linebot_event_handler import bind_handler  # ✅ import bind_handler 而非 handler！
+
+from routers.stock import get_stock_info  # TWSE 查詢模組 
+#from routers.mock_stock import get_stock_info
 
 router = APIRouter()
 
@@ -17,10 +19,6 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
-#bind_handler(handler)  # ✅ 註冊事件處理器
-handler = bind_handler(handler)  # ✅ 一釘：要覆蓋 handler！
-if not hasattr(handler, "handle"):
-    logger.error("❌ handler 尚未綁定 ➜ Webhook 無法處理 LINE 訊息")
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
@@ -31,14 +29,13 @@ async def webhook(request: Request):
     signature = request.headers.get("x-line-signature")
 
     try:
-       # handler.handle(body.decode("utf-8"), signature)
-        await handler.handle(body.decode("utf-8"), signature)
+        handler.handle(body.decode("utf-8"), signature)
     except InvalidSignatureError:
         logger.warning("❌ LINE Webhook Signature 驗證失敗")
         return PlainTextResponse("Invalid signature", status_code=400)
 
     return PlainTextResponse("OK")
-"""
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event: MessageEvent):
     try:
@@ -100,4 +97,3 @@ async def process_event(event: MessageEvent):
         logger.info(f"✅ 準備回覆 LINE ➜ token={event.reply_token}, text={reply_text}")
     except Exception as e:
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
-"""
