@@ -2,7 +2,7 @@
 
 from routers.twse import get_twse_data
 from routers.publicinfo import get_mops_metadata
-#from routers.goodinfo import get_goodinfo_metadata
+from routers.goodinfo import get_goodinfo_metadata
 import asyncio
 
 async def get_stock_info(stock_id: str, date: str = None) -> dict:
