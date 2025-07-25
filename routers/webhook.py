@@ -12,7 +12,7 @@ from asyncio import create_task
 from routers.ai_stock_v1 import get_stock_info  # ✅ 改用整合模組 
 
 from utils.fallback_chain import query_stock_with_fallbacks
-
+import re
 
 router = APIRouter()
 
@@ -54,15 +54,45 @@ async def webhook(request: Request):
 
     # LINE 回覆處理邏輯...
 
+@handler.add(MessageEvent)
+def handle_message(event):
+    create_task(process_event(event))
+
+async def process_event(event):
+    if isinstance(event.message, TextMessage):
+        await handle_text_message(event)
+
+async def handle_text_message(event):
+    stock_id = extract_stock_id(event.message.text)
+    data = await query_stock_with_fallbacks(stock_id)
+
+    if "error" in data:
+        reply_text = f"查詢失敗：{data['error']}"
+    else:
+        reply_text = (
+            f"📈 {stock_id} 查詢結果\n"
+            f"收盤：{data['收盤']}\n"
+            f"成交量：{data['成交量']}\n"
+            f"來源：{data['查詢來源']}\n"
+            f"查詢日期：{data['查詢日期']}"
+        )
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=reply_text)
+    )
 
 
-@handler.add(MessageEvent, message=TextMessage)
-def handle_text_message(event: MessageEvent):
-    try:
-        logger.info(f"✅ webhook 收到 LINE 訊息：{event.message.text}")
-        create_task(process_event(event))
-    except Exception as e:
-        logger.exception(f"📛 webhook callback 發生例外：{str(e)}")
+def extract_stock_id_from_event(text: str) -> str:
+    """
+    從 LINE 訊息中解析出股票代號，例如「查詢 2330」、「股價 2603」
+    """
+    # 清理空格 & 去掉「查詢」、「股價」等前綴
+    cleaned = re.sub(r"(查詢|查|股價|看看)", "", text, flags=re.IGNORECASE).strip()
+
+    # 只留下 4 位數股票代號
+    match = re.fullmatch(r"\d{4}", cleaned)
+    return match.group(0) if match else ""
+
 
 async def process_event(event: MessageEvent):
     text = event.message.text.strip()
@@ -119,21 +149,13 @@ async def process_event(event: MessageEvent):
         logger.exception(f"📛 回覆訊息失敗：{str(e)}")
 
 
-
-
 """
-@router.post("/webhook")
-async def webhook(request: Request):
-    body = await request.body()
-    signature = request.headers.get("x-line-signature")
 
+@handler.add(MessageEvent, message=TextMessage)
+def handle_text_message(event: MessageEvent):
     try:
-        handler.handle(body.decode("utf-8"), signature)
-    except InvalidSignatureError:
-        logger.warning("❌ LINE Webhook Signature 驗證失敗")
-        return PlainTextResponse("Invalid signature", status_code=400)
-
-    return PlainTextResponse("OK")
+        logger.info(f"✅ webhook 收到 LINE 訊息：{event.message.text}")
+        create_task(process_event(event))
+    except Exception as e:
+        logger.exception(f"📛 webhook callback 發生例外：{str(e)}")
 """
-
-
