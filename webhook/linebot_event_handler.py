@@ -1,55 +1,52 @@
 import requests
-from linebot.models import FlexSendMessage, MessageEvent, TextMessage
+from linebot.models import FlexSendMessage, MessageEvent, TextMessage, TextSendMessage
 import logging
 from webhook.stock_utils import name_to_id
 from webhook.bubble_builder import reply_bubble_builder
 from webhook.log_trace_decorator import log_trace
 
-
 logger = logging.getLogger("uvicorn")
-BASE_URL = "https://danielbot-fastapi-webhook-437280480144.asia-east1.run.app"  # ✅ Cloud Run 的 webhook URL
+BASE_URL = "https://danielbot-fastapi-webhook-437280480144.asia-east1.run.app"
 
 def bind_handler(handler):
     @handler.add(MessageEvent, message=TextMessage)
     @log_trace("LINE Callback Handler")
-    def handle_message(event):
+    async def handle_message(event):
         text = event.message.text.strip()
         logger.info(f"✅ LINE callback 觸發 ➜ 訊息：{text}")
-        
+
         if text.startswith("查詢"):
             query = text.replace("查詢", "").strip()
             stock_id = query if query.isdigit() else name_to_id(query)
             if not stock_id:
-                line_bot_api.reply_message(
+                await line_bot_api.reply_message(
                     event.reply_token,
                     TextSendMessage(text=f"查無股票代號「{query}」，請輸入正確台股代碼")
                 )
                 return
-    
-            # ✅ call router price trace
+
             url = f"{BASE_URL}/ai-stock/price/{stock_id}"
             resp = requests.get(url)
             if resp.status_code != 200:
-                line_bot_api.reply_message(
+                await line_bot_api.reply_message(
                     event.reply_token,
                     TextSendMessage(text=f"查價失敗 ➔ 無法取得「{stock_id}」資料，請稍後再試")
                 )
                 return
-            
+
             response = resp.json()
-            # ✅ 簡化回覆 ➔ 純文字
             reply_text = (
                 f"📈 {stock_id} 查價結果\n"
                 f"成交價：{response.get('price', '--')}\n"
                 f"漲跌：{response.get('change', '--')}\n"
                 f"時間：{response.get('timestamp', '--')}"
             )
-            line_bot_api.reply_message(
+            await line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text=reply_text)
             )
-            
             logger.info(f"✅ reply 查價完成 ➜ 回覆股票代號 {stock_id}")
+
 
 """
 def bind_handler(handler):
