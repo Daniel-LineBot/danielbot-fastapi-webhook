@@ -1,6 +1,6 @@
 # ai_stock_v1.py
 
-from routers.twse import get_twse_data
+from routers.twse import get_twse_data, get_price_twse
 from routers.publicinfo import get_mops_metadata
 from routers.goodinfo import get_goodinfo_metadata
 import asyncio
