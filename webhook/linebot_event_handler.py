@@ -1,6 +1,7 @@
 import requests
 import logging
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot import WebhookHandler  # 🔧 型別註解才不會炸！
 from webhook.stock_utils import name_to_id
 from webhook.log_trace_decorator import log_trace
 
