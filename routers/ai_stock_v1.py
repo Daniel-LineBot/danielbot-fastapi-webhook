@@ -26,3 +26,19 @@ async def get_stock_info(stock_id: str, date: str = None) -> dict:
             "Goodinfo": bool(goodinfo_data)
         }
     }
+async def get_stock_data(stock_id: str, date: str = None) -> dict:
+    twse_data = await get_twse_data(stock_id, date)
+    if twse_data and "收盤" in twse_data:
+        return twse_data | {"來源": "TWSE"}
+
+    goodinfo_data = await get_price_goodinfo(stock_id)
+    if goodinfo_data and "收盤" in goodinfo_data:
+        return goodinfo_data | {"來源": "Goodinfo"}
+
+    public_data = await get_price_publicinfo(stock_id)
+    if public_data and "收盤" in public_data:
+        return public_data | {"來源": "PublicInfo"}
+
+    return {
+        "error": f"【{stock_id}】{date or '今日'} 查無盤後資料，請確認是否為交易日"
+    }
