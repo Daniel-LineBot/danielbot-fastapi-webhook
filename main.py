@@ -10,12 +10,6 @@ from routers import webhook
 from routers import ai_stock_v1
 
 app = FastAPI()
-app.include_router(ai_stock_v1.router)
-app.include_router(webhook.router)  # ✅ 只需掛 router，handler 會自動註冊
-
-
-
-app = FastAPI()
 app.include_router(webhook.router)
 app.include_router(ai_stock_v1.router)
 
