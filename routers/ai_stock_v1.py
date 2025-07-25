@@ -1,15 +1,15 @@
 # ai_stock_v1.py
 
-from routers.twse import get_twse_data, get_price_twse
-from routers.publicinfo import get_mops_metadata
-from routers.goodinfo import get_goodinfo_metadata
+from routers.twse import get_twse_data
+from routers.publicinfo import get_price_publicinfo
+from routers.goodinfo import get_price_goodinfo
 import asyncio
 
 async def get_stock_info(stock_id: str, date: str = None) -> dict:
     tasks = [
         get_twse_data(stock_id, date),
-        get_mops_metadata(stock_id),
-        get_goodinfo_metadata(stock_id)
+        get_price_publicinfo(stock_id),
+        get_price_goodinfo(stock_id)
     ]
 
     twse_data, mops_data, goodinfo_data = await asyncio.gather(*tasks)
