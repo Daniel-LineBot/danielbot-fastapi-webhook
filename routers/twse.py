@@ -23,7 +23,8 @@ async def get_twse_data(stock_id: str, date: str = "") -> dict:
         table = soup.find("table")
 
         # 🧨 fallback: 查不到資料表就回查昨天
-        if not table and not date:
+        if (not table or len(table.find_all("tr")[2:]) == 0) and not date:
+            # fallback 查昨天            
             yesterday = (datetime.today() - timedelta(days=1)).strftime("%Y%m%d")
             params["date"] = yesterday
             resp = await client.get(url, params=params)
