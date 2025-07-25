@@ -7,7 +7,7 @@ from webhook.log_trace_decorator import log_trace
 logger = logging.getLogger("uvicorn")
 BASE_URL = "https://danielbot-fastapi-webhook-437280480144.asia-east1.run.app"
 
-def bind_handler(handler):
+def bind_handler(handler: WebhookHandler) -> WebhookHandler:
     @handler.add(MessageEvent, message=TextMessage)
     @log_trace("LINE Callback Handler")
     async def handle_message(event):
