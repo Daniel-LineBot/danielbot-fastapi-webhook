@@ -46,7 +46,7 @@ def bind_handler(handler):
                 TextSendMessage(text=reply_text)
             )
             logger.info(f"✅ reply 查價完成 ➜ 回覆股票代號 {stock_id}")
-
+return handler  # ✅ 千萬記得 return handler！
 
 """
 def bind_handler(handler):
