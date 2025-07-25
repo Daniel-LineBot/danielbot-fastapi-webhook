@@ -11,8 +11,7 @@ BASE_URL = "https://danielbot-fastapi-webhook-437280480144.asia-east1.run.app"
 def bind_handler(handler: WebhookHandler) -> WebhookHandler:
     @handler.add(MessageEvent, message=TextMessage)
     @log_trace("LINE Callback Handler")
-    #async def handle_message(event):
-    def handle_message(event):
+    async def handle_message(event):    
         text = event.message.text.strip()
         logger.info(f"✅ LINE callback 觸發 ➜ 訊息：{text}")
 
@@ -23,7 +22,7 @@ def bind_handler(handler: WebhookHandler) -> WebhookHandler:
         stock_id = query if query.isdigit() else name_to_id(query)
 
         if not stock_id:
-            line_bot_api.reply_message(
+            await line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text=f"查無股票代號「{query}」，請輸入正確台股代碼")
             )
@@ -34,7 +33,7 @@ def bind_handler(handler: WebhookHandler) -> WebhookHandler:
         resp = requests.get(url)
 
         if resp.status_code != 200:
-            line_bot_api.reply_message(
+            await line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text=f"查價失敗 ➜ 無法取得「{stock_id}」資料，請稍後再試")
             )
@@ -49,7 +48,7 @@ def bind_handler(handler: WebhookHandler) -> WebhookHandler:
             f"🕒 時間：{response.get('timestamp', '--')}"
         )
 
-        line_bot_api.reply_message(
+        await line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text=reply_text)
         )
