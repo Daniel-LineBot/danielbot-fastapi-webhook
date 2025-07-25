@@ -9,7 +9,9 @@ async def get_price_goodinfo(stock_id: str) -> dict:
         "User-Agent": "Mozilla/5.0",
         "Referer": "https://goodinfo.tw"
     }
-
+    
+    timeout = httpx.Timeout(5.0)  # 加在 headers 下方
+    
     async with httpx.AsyncClient(headers=headers) as client:
         resp = await client.get(url)
         soup = BeautifulSoup(resp.text, "html.parser")
