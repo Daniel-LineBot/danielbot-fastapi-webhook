@@ -23,7 +23,7 @@ def bind_handler(handler: WebhookHandler) -> WebhookHandler:
         stock_id = query if query.isdigit() else name_to_id(query)
 
         if not stock_id:
-            await line_bot_api.reply_message(
+            line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text=f"查無股票代號「{query}」，請輸入正確台股代碼")
             )
@@ -34,7 +34,7 @@ def bind_handler(handler: WebhookHandler) -> WebhookHandler:
         resp = requests.get(url)
 
         if resp.status_code != 200:
-            await line_bot_api.reply_message(
+            line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text=f"查價失敗 ➜ 無法取得「{stock_id}」資料，請稍後再試")
             )
@@ -49,7 +49,7 @@ def bind_handler(handler: WebhookHandler) -> WebhookHandler:
             f"🕒 時間：{response.get('timestamp', '--')}"
         )
 
-        await line_bot_api.reply_message(
+        line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text=reply_text)
         )
