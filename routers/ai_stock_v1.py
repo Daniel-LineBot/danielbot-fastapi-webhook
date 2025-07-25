@@ -18,7 +18,12 @@ async def get_stock_data(stock_id: str, date: str = None) -> dict:
     if twse_data and "收盤" in twse_data:
         return twse_data | {"來源": "TWSE"}
 
-    goodinfo_data = await get_price_goodinfo(stock_id)
+    try:
+        goodinfo_data = await get_price_goodinfo(stock_id)
+    except httpx.RequestError as e:
+        logger.warning(f"⚠ Goodinfo fallback failed ➜ {e}")
+        goodinfo_data = {}
+    
     if goodinfo_data and "收盤" in goodinfo_data:
         return goodinfo_data | {"來源": "Goodinfo"}
 
