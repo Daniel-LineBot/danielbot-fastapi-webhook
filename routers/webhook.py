@@ -17,7 +17,8 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
-bind_handler(handler)  # ✅ 註冊事件處理器
+#bind_handler(handler)  # ✅ 註冊事件處理器
+handler = bind_handler(handler)  # ✅ 一釘：要覆蓋 handler！
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
