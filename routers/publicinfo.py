@@ -3,6 +3,15 @@
 import httpx
 from bs4 import BeautifulSoup
 
+async def get_mops_metadata(stock_id: str) -> dict:
+    # TODO: 擷取 MOPS 公開資訊，取得 EPS / 公司名 / 季報
+    return {
+        "EPS": None,
+        "公司名稱": None,
+        "財報季": None
+    }
+
+
 async def get_price_publicinfo(stock_id: str) -> dict:
     url = f"https://mops.twse.com.tw/mops/web/ajax_t05st10_ifrs"
     data = {
