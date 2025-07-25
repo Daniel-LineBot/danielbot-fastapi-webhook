@@ -7,13 +7,6 @@ from datetime import datetime, timedelta, date
 import calendar
 
 
-# routers/twse.py
-
-import httpx
-from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
-
-
 async def get_twse_data(stock_id: str, date: str = "", use_json: bool = False) -> dict:
     if use_json:
         url = "https://www.twse.com.tw/exchangeReport/STOCK_DAY"
