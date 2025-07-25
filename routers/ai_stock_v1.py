@@ -1,4 +1,4 @@
-# ai_stock.py
+# ai_stock_v1.py
 
 from routers.twse import get_twse_data
 from routers.publicinfo import get_mops_metadata
