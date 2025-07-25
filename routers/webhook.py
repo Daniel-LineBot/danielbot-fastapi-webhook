@@ -82,16 +82,16 @@ async def handle_text_message(event):
     )
 
 
-def extract_stock_id_from_event(text: str) -> str:
-    """
-    從 LINE 訊息中解析出股票代號，例如「查詢 2330」、「股價 2603」
-    """
-    # 清理空格 & 去掉「查詢」、「股價」等前綴
-    cleaned = re.sub(r"(查詢|查|股價|看看)", "", text, flags=re.IGNORECASE).strip()
+def extract_stock_id_from_event(event: dict) -> str:
+    try:
+        text = event.get("message", {}).get("text", "")
+        if not text or not isinstance(text, str):
+            return ""
+        return re.sub(r"(查詢|查|股價|看看)", "", text, flags=re.IGNORECASE).strip()
+    except Exception as e:
+        print(f"❌ extract_stock_id 出錯：{e}")
+        return ""
 
-    # 只留下 4 位數股票代號
-    match = re.fullmatch(r"\d{4}", cleaned)
-    return match.group(0) if match else ""
 
 
 async def process_event(event: MessageEvent):
