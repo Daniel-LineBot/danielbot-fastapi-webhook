@@ -1,7 +1,7 @@
 import httpx
 from routers.twse import get_twse_data
-from routers.goodinfo import get_goodinfo_data
-from routers.mops import get_mops_data
+from routers.publicinfo import get_price_publicinfo
+from routers.goodinfo import get_price_goodinfo
 
 async def query_stock_with_fallbacks(stock_id: str) -> dict:
     log_chain = []
@@ -14,7 +14,7 @@ async def query_stock_with_fallbacks(stock_id: str) -> dict:
         return twse_result
     log_chain.append("TWSE failed")
 
-    goodinfo_result = await get_goodinfo_data(stock_id)
+    goodinfo_result = await get_price_goodinfo(stock_id)
     if "error" not in goodinfo_result and goodinfo_result.get("收盤"):
         goodinfo_result["查詢來源"] = "Goodinfo"
         goodinfo_result["查詢日期"] = goodinfo_result.get("資料時間")
@@ -22,7 +22,7 @@ async def query_stock_with_fallbacks(stock_id: str) -> dict:
         return goodinfo_result
     log_chain.append("Goodinfo failed")
 
-    mops_result = await get_mops_data(stock_id)
+    mops_result = await get_price_publicinfo(stock_id)
     if "error" not in mops_result:
         mops_result["查詢來源"] = "MOPS"
         mops_result["查詢日期"] = mops_result.get("資料時間")
