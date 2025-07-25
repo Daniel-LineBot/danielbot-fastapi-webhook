@@ -12,6 +12,7 @@ from asyncio import create_task
 from routers.ai_stock_v1 import get_stock_info  # ✅ 改用整合模組 
 
 from utils.fallback_chain import query_stock_with_fallbacks
+from utils.parser import extract_stock_query
 import re
 
 router = APIRouter()
