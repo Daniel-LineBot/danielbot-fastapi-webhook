@@ -3,6 +3,15 @@
 import httpx
 from bs4 import BeautifulSoup
 
+
+async def get_twse_data(stock_id: str, date: str) -> dict:
+    # TODO: 擷取 TWSE API 並解析資料
+    return {
+        "成交價": None,
+        "開盤": None,
+        "產業別": None
+    }
+
 async def get_price_twse(stock_id: str) -> dict:
     url = f"https://www.twse.com.tw/zh/page/trading/exchange/STOCK_DAY.html"
     params = {
