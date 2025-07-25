@@ -3,6 +3,16 @@
 import httpx
 from bs4 import BeautifulSoup
 
+
+async def get_goodinfo_metadata(stock_id: str) -> dict:
+    # TODO: 使用 aiohttp 抓取網頁、lxml 或 bs4 分析 HTML
+    return {
+        "本益比": None,
+        "殖利率": None,
+        "股利政策": None
+    }
+
+
 async def get_price_goodinfo(stock_id: str) -> dict:
     url = f"https://goodinfo.tw/tw/StockDetail.asp?STOCK_ID={stock_id}"
     headers = {"user-agent": "Mozilla/5.0"}
