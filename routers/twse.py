@@ -7,8 +7,51 @@ from datetime import datetime, timedelta, date
 import calendar
 
 
+# routers/twse.py
 
-async def get_twse_data(stock_id: str, date: str = "") -> dict:
+import httpx
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+
+
+async def get_twse_data(stock_id: str, date: str = "", use_json: bool = False) -> dict:
+    if use_json:
+        url = "https://www.twse.com.tw/exchangeReport/STOCK_DAY"
+        date_to_use = date or datetime.today().strftime("%Y%m%d")
+        params = {
+            "response": "json",
+            "date": date_to_use,
+            "stockNo": stock_id,
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url, params=params)
+            json_data = resp.json()
+            rows = json_data.get("data", [])
+
+            # ⏪ fallback 查昨天
+            if not rows and not date:
+                yesterday = (datetime.today() - timedelta(days=1)).strftime("%Y%m%d")
+                params["date"] = yesterday
+                resp = await client.get(url, params=params)
+                json_data = resp.json()
+                rows = json_data.get("data", [])
+
+            if not rows:
+                return {"error": "TWSE JSON查詢失敗 ➜ 找不到資料"}
+
+            last_row = rows[-1]
+            return {
+                "資料時間": json_data.get("date", date_to_use),
+                "開盤": last_row[3],
+                "最高": last_row[4],
+                "最低": last_row[5],
+                "收盤": last_row[6],
+                "漲跌": last_row[7],
+                "成交量": last_row[1],
+                "來源": "TWSE_JSON"
+            }
+
+    # 🔁 fallback: TWSE HTML
     url = "https://www.twse.com.tw/zh/page/trading/exchange/STOCK_DAY.html"
     date_to_use = date or datetime.today().strftime("%Y%m%d")
     params = {
@@ -23,7 +66,7 @@ async def get_twse_data(stock_id: str, date: str = "") -> dict:
         table = soup.find("table")
         rows = table.find_all("tr")[2:] if table else []
 
-        # 🧨 fallback: 查不到資料表就回查昨天
+        # 🧨 fallback 查昨天
         if not rows and not date:
             yesterday = (datetime.today() - timedelta(days=1)).strftime("%Y%m%d")
             params["date"] = yesterday
@@ -33,7 +76,7 @@ async def get_twse_data(stock_id: str, date: str = "") -> dict:
             rows = table.find_all("tr")[2:] if table else []
 
         if not rows:
-            return {"error": "TWSE查詢失敗 ➜ 找不到資料或資料為空"}
+            return {"error": "TWSE HTML查詢失敗 ➜ 找不到資料或資料為空"}
 
         for row in reversed(rows):
             cells = row.find_all("td")
@@ -49,7 +92,8 @@ async def get_twse_data(stock_id: str, date: str = "") -> dict:
                     "來源": "TWSE",
                 }
 
-        return {"error": "TWSE無法解析最新成交資料"}
+        return {"error": "TWSE HTML無法解析最新成交資料"}
+
 
 
 
