@@ -28,7 +28,8 @@ async def webhook(request: Request):
     signature = request.headers.get("x-line-signature")
 
     try:
-        handler.handle(body.decode("utf-8"), signature)
+       # handler.handle(body.decode("utf-8"), signature)
+        await handler.handle(body.decode("utf-8"), signature)
     except InvalidSignatureError:
         logger.warning("❌ LINE Webhook Signature 驗證失敗")
         return PlainTextResponse("Invalid signature", status_code=400)
