@@ -1,19 +1,22 @@
 # webhook/log_trace_decorator.py
+# webhook/log_trace_decorator.py
 import logging
+import inspect
+from functools import wraps
+
 logger = logging.getLogger("uvicorn")
 
-import inspect
-
-def log_trace(name):
+def log_trace(name: str):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            logger.info(f"🔍 ENTER: {name}")
+            logger.info(f"🟡 START ➜ {name}")
             result = await func(*args, **kwargs)
-            logger.info(f"✅ EXIT: {name}")
+            logger.info(f"🟢 END ➜ {name}")
             return result
         return wrapper
     return decorator
+
 
 
 """
