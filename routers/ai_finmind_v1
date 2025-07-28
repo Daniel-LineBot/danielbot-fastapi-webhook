@@ -1,4 +1,6 @@
+import os
 import httpx
+
 FINMIND_TOKEN = os.getenv("FINMIND_TOKEN")
 
 async def get_finmind_price(stock_id: str, date: str = None) -> dict:
