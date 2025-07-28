@@ -5,7 +5,8 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.exceptions import InvalidSignatureError
 import os, logging, re
 from asyncio import create_task
-from ai_stock_v2 import get_stock_info, get_dividend_info
+from routers.ai_stock_v2 import get_stock_info, get_dividend_info
+
 
 router = APIRouter()
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
