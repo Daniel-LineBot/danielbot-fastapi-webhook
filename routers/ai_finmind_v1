@@ -1,5 +1,5 @@
 import os
-import httpx
+import httpx 
 
 FINMIND_TOKEN = os.getenv("FINMIND_TOKEN")
 
