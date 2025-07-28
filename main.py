@@ -6,11 +6,12 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 
-from routers import webhook
-
+from fastapi import FastAPI
+from routers import ai_webhook_v1
 
 app = FastAPI()
-app.include_router(webhook.router)
+app.include_router(ai_webhook_v1.router)
+
 
 
 print("✅ DanielBot webhook app 啟動中… FastAPI 已掛上 /webhook")
