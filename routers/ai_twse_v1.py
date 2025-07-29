@@ -2,7 +2,13 @@
 import httpx
 from loguru import logger
 from utils.formatter_twse import format_dividend
+import re
 
+def extract_ex_date_from_note(note: str) -> str | None:
+    match = re.search(r"除[權息]交易日為\s*(\d{4}/\d{2}/\d{2})", note)
+    if match:
+        return match.group(1)
+    return None
 
 async def get_twse_price(stock_id: str, date: str = None) -> dict:
     url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
