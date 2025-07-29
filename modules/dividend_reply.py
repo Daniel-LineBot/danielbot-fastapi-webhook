@@ -2,10 +2,11 @@
 from routers.ai_finmind_v1 import get_finmind_dividend
 from utils.stock_parser import extract_stock_id, normalize_query_type
 
-from services.twse_client import get_twse_dividend
-from services.tdcc_client import get_cdib_dividend
-from services.finmind_client import get_finmind_dividend
+from routers.ai_twse_v1 import get_twse_dividend
+from routers.ai_finmind_v1 import get_finmind_dividend
+from modules.tdcc_client import get_cdib_dividend  # 若你這支已放在 modules 裡
 from loguru import logger
+
 
 async def get_dividend_info(stock_id: str) -> dict:
     for source, fetcher in [
