@@ -43,20 +43,20 @@ async def get_twse_dividend(stock_id: str) -> dict:
             r = await client.get(url)
             data = r.json()
 
-            # 🔍 加入 log trace ➜ 快速檢查 TWSE 回傳欄位
             logger.warning(f"[TWSE Dividend] Total records: {len(data)}")
             if len(data) > 0:
                 logger.warning(f"[TWSE Dividend] First record keys: {list(data[0].keys())}")
 
             for item in data:
                 if item.get("公司代號") == stock_id:
-                    return {
+                    dividend = {
                         "year": item.get("股利年度", "-"),
                         "cash_dividend": item.get("股東配發-盈餘分配之現金股利(元/股)", "-"),
                         "stock_dividend": item.get("股東配發-盈餘轉增資配股(元/股)", "-"),
                         "ex_dividend_date": item.get("出表日期", "-"),
                         "source": "TWSE"
                     }
+                    return {"text": format_dividend(dividend), **dividend}
 
         except Exception as e:
             logger.warning(f"[TWSE Dividend] API 讀取失敗: {e}")
