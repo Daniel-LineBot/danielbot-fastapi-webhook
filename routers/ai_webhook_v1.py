@@ -6,6 +6,8 @@ from linebot.exceptions import InvalidSignatureError
 import os, logging, re
 from asyncio import create_task
 from routers.ai_stock_v2 import get_stock_info, get_dividend_info
+from utils.query_metadata_parser import get_query_metadata
+from modules.reply_router import reply_router
 
 
 router = APIRouter()
@@ -31,44 +33,11 @@ def handle_message(event: MessageEvent):
     create_task(process_event(event))
 
 async def process_event(event: MessageEvent):
-    text = event.message.text.strip()
+    user_text = event.message.text.strip()
     reply_token = event.reply_token
-    reply_text = ""
 
-    match = re.match(r"(查詢|股價|配息)\s*(\d{4})(?:\s*(\d{8}))?", text)
-    if match:
-        cmd, stock_id, date = match.groups()
-        try:
-            if cmd == "配息":
-                info = await get_dividend_info(stock_id)
-                reply_text = (
-                    f"💰 {stock_id} 配息資訊\n"
-                    f"年度：{info.get('year', '-')}\n"
-                    f"現金股利：{info.get('cash_dividend', '-')}\n"
-                    f"股票股利：{info.get('stock_dividend', '-')}\n"
-                    f"除權息日：{info.get('ex_dividend_date', '-')}\n"
-                    f"來源：{info.get('source', '-')}"
-                )
-            else:
-                info = await get_stock_info(stock_id, date)
-                reply_text = (
-                    f"📈 {info.get('name', '')}（{stock_id}）\n"
-                    f"成交價：{info.get('price', '-')}\n"
-                    f"開盤：{info.get('open', '-')}\n"
-                    f"最高：{info.get('high', '-')}\n"
-                    f"最低：{info.get('low', '-')}\n"
-                    f"成交量：{info.get('volume', '-')}\n"
-                    f"查詢日期：{info.get('date', '-')}\n"
-                    f"來源：{info.get('source', '-')}"
-                )
-        except Exception as e:
-            logger.exception(f"📛 查詢失敗：{e}")
-            reply_text = f"⚠️ 查詢失敗：{str(e)}"
-    else:
-        reply_text = (
-            f"你剛說的是：{text}\n\n"
-            "💡 指令範例：\n查詢 2330\n查詢 2330 20250701\n配息 2330"
-        )
+    metadata = get_query_metadata(user_text)
+    reply_text = await reply_router(metadata)
 
     try:
         line_bot_api.reply_message(reply_token, TextSendMessage(text=reply_text))
