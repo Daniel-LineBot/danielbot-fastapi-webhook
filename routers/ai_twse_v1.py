@@ -1,9 +1,8 @@
 #routers/ai_twse_v1.py
 import httpx
 from loguru import logger
+from utils.formatter_twse import format_dividend
 
-import httpx
-from loguru import logger
 
 async def get_twse_price(stock_id: str, date: str = None) -> dict:
     url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
