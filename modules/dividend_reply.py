@@ -13,6 +13,10 @@ def get_dividend_reply(query_text: str) -> str:
         if not data:
             return f"查無 {stock_id} 的配息資料。可能尚未公布或來源缺漏。"
 
+        # 💡 加在這裡最合適：
+        logger.info(f"⛳ FinMind 查詢 stock_id={stock_id} dividend 中…")
+        logger.info(f"📤 查詢結果：{data}")
+
         reply = []
         for entry in data:
             year = entry.get("year")
@@ -20,7 +24,9 @@ def get_dividend_reply(query_text: str) -> str:
             stock = entry.get("stock_dividend", 0)
             reply.append(f"{year} 年：現金股利 {cash} 元，股票股利 {stock} 股")
 
+        logger.info(f"📩 回覆訊息：{' | '.join(reply)}")  # ✅ 建議用 join 讓 log 更清楚
         return "\n".join(reply)
+
 
     except Exception as e:
         # Optional: fallback to TWSE or Goodinfo
