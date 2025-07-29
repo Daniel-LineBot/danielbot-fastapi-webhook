@@ -4,12 +4,6 @@ from loguru import logger
 from utils.formatter_twse import format_dividend
 import re
 
-def extract_ex_date_from_note(note: str) -> str | None:
-    match = re.search(r"除[權息]交易日為\s*(\d{4}/\d{2}/\d{2})", note)
-    if match:
-        return match.group(1)
-    return None
-
 async def get_twse_price(stock_id: str, date: str = None) -> dict:
     url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
     async with httpx.AsyncClient() as client:
@@ -42,6 +36,12 @@ async def get_twse_price(stock_id: str, date: str = None) -> dict:
     return {"error": f"TWSE 查無股價資料 for {stock_id}"}
 
 
+def extract_ex_date_from_note(note: str) -> str | None:
+    match = re.search(r"除[權息]交易日為\s*(\d{4}/\d{2}/\d{2})", note)
+    if match:
+        return match.group(1)
+    return None
+
 async def get_twse_dividend(stock_id: str) -> dict:
     url = "https://openapi.twse.com.tw/v1/opendata/t187ap45_L"
     async with httpx.AsyncClient() as client:
@@ -55,13 +55,17 @@ async def get_twse_dividend(stock_id: str) -> dict:
 
             for item in data:
                 if item.get("公司代號") == stock_id:
+                    note = item.get("備註", "")
+                    ex_date = extract_ex_date_from_note(note) or item.get("出表日期", "-")
+
                     dividend = {
                         "year": item.get("股利年度", "-"),
                         "cash_dividend": item.get("股東配發-盈餘分配之現金股利(元/股)", "-"),
                         "stock_dividend": item.get("股東配發-盈餘轉增資配股(元/股)", "-"),
-                        "ex_dividend_date": item.get("出表日期", "-"),
+                        "ex_dividend_date": ex_date,
                         "source": "TWSE"
                     }
+
                     return {"text": format_dividend(dividend), **dividend}
 
         except Exception as e:
@@ -69,4 +73,3 @@ async def get_twse_dividend(stock_id: str) -> dict:
             return {"error": str(e)}
 
     return {"error": f"TWSE 查無配息資料 for {stock_id}"}
-
