@@ -2,24 +2,40 @@
 import httpx
 from loguru import logger
 
+import httpx
+from loguru import logger
+
 async def get_twse_price(stock_id: str, date: str = None) -> dict:
     url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
     async with httpx.AsyncClient() as client:
-        r = await client.get(url)
-        data = r.json()
-        for item in data:
-            if item["證券代號"] == stock_id:
-                return {
-                    "name": item["證券名稱"],
-                    "price": item["收盤價"],
-                    "open": item["開盤價"],
-                    "high": item["最高價"],
-                    "low": item["最低價"],
-                    "volume": item["成交股數"],
-                    "date": item["日期"],
-                    "source": "TWSE"
-                }
-        return {"error": "查無資料"}
+        try:
+            r = await client.get(url)
+            data = r.json()
+
+            # 🔍 Schema trace: 確認 key 結構是否如預期
+            logger.warning(f"[TWSE Price] Total records: {len(data)}")
+            if len(data) > 0:
+                logger.warning(f"[TWSE Price] First record keys: {list(data[0].keys())}")
+
+            for item in data:
+                if item.get("證券代號") == stock_id:
+                    return {
+                        "name": item.get("證券名稱", "-"),
+                        "price": item.get("收盤價", "-"),
+                        "open": item.get("開盤價", "-"),
+                        "high": item.get("最高價", "-"),
+                        "low": item.get("最低價", "-"),
+                        "volume": item.get("成交股數", "-"),
+                        "date": item.get("日期", "-"),
+                        "source": "TWSE"
+                    }
+
+        except Exception as e:
+            logger.warning(f"[TWSE Price] API 讀取失敗: {e}")
+            return {"error": str(e)}
+
+    return {"error": f"TWSE 查無股價資料 for {stock_id}"}
+
 
 async def get_twse_dividend(stock_id: str) -> dict:
     url = "https://openapi.twse.com.tw/v1/opendata/t187ap45_L"
