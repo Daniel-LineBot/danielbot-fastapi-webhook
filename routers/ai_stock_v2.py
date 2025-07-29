@@ -1,6 +1,5 @@
-# ✅ 模組化查詢 TWSE（已移除 FinMind）
+routers/ai_stock_v2.py
 from routers.ai_twse_v1 import get_twse_price, get_twse_dividend
-
 from routers.ai_finmind_v1 import get_finmind_price, get_finmind_dividend
 
 async def get_stock_info(stock_id: str, date: str = None) -> dict:
