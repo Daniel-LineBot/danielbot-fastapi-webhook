@@ -52,10 +52,10 @@ async def get_twse_dividend(stock_id: str) -> dict:
             for item in data:
                 if item.get("公司代號") == stock_id:
                     return {
-                        "year": item.get("年度", "-"),
-                        "cash_dividend": item.get("現金股利", "-"),
-                        "stock_dividend": item.get("股票股利", "-"),
-                        "ex_dividend_date": item.get("除權息交易日", "-"),
+                        "year": item.get("股利年度", "-"),
+                        "cash_dividend": item.get("股東配發-盈餘分配之現金股利(元/股)", "-"),
+                        "stock_dividend": item.get("股東配發-盈餘轉增資配股(元/股)", "-"),
+                        "ex_dividend_date": item.get("出表日期", "-"),
                         "source": "TWSE"
                     }
 
@@ -64,3 +64,4 @@ async def get_twse_dividend(stock_id: str) -> dict:
             return {"error": str(e)}
 
     return {"error": f"TWSE 查無配息資料 for {stock_id}"}
+
