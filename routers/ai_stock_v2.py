@@ -6,7 +6,6 @@ from modules.dividend_reply import get_dividend_info
 from loguru import logger  # ✅ 必要補上這行
 
 
-
 async def get_stock_info(stock_id: str, date: str = None) -> dict:
     for source, fetcher in [
         ("TWSE", get_twse_price),
@@ -20,5 +19,22 @@ async def get_stock_info(stock_id: str, date: str = None) -> dict:
         except Exception as e:
             logger.warning(f"[Fallback] {source} 讀取失敗：{e}")
     return {"error": "全部來源都查不到股價資訊", "stock_id": stock_id}
+
+
+async def get_dividend_info(stock_id: str) -> dict:
+    for source, fetcher in [
+        ("TWSE", get_twse_dividend),
+        ("FinMind", get_finmind_dividend),
+        ("TDCC", get_cdib_dividend)
+    ]:
+        try:
+            data = await fetcher(stock_id)
+            if data and isinstance(data, dict) and len(data.keys()) > 1 and not data.get("error"):
+                data["source"] = source
+                return data
+        except Exception as e:
+            logger.warning(f"[Fallback Dividend] {source} 讀取失敗：{e}")
+    
+    return {"error": f"全部來源都查不到配息資料 for {stock_id}", "stock_id": stock_id}
 
 
