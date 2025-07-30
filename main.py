@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-import os
+import os     
 
 from fastapi import FastAPI
 from routers import ai_webhook_v1
