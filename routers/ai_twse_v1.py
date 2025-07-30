@@ -3,6 +3,8 @@ import httpx
 from loguru import logger
 from utils.formatter_twse import format_dividend
 import re
+from utils.stock_parser import extract_ex_date_from_note
+
 
 async def get_twse_price(stock_id: str, date: str = None) -> dict:
     url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
