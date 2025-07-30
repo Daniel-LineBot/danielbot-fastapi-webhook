@@ -38,12 +38,6 @@ async def get_twse_price(stock_id: str, date: str = None) -> dict:
     return {"error": f"TWSE 查無股價資料 for {stock_id}"}
 
 
-def extract_ex_date_from_note(note: str) -> str | None:
-    match = re.search(r"除[權息]交易日為\s*(\d{4}/\d{2}/\d{2})", note)
-    if match:
-        return match.group(1)
-    return None
-
 async def get_twse_dividend(stock_id: str) -> dict:
     url = "https://openapi.twse.com.tw/v1/opendata/t187ap45_L"
     async with httpx.AsyncClient() as client:
