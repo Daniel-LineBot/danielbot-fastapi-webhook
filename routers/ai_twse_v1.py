@@ -6,6 +6,8 @@ import re
 from utils.stock_parser import extract_ex_date_from_note
 
 
+from utils.stock_parser import extract_ex_date_from_note
+
 async def get_twse_price(stock_id: str, date: str = None) -> dict:
     url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
     async with httpx.AsyncClient() as client:
@@ -20,6 +22,9 @@ async def get_twse_price(stock_id: str, date: str = None) -> dict:
 
             for item in data:
                 if item.get("證券代號") == stock_id:
+                    note = item.get("備註", "")
+                    ex_date = extract_ex_date_from_note(note)
+
                     return {
                         "name": item.get("證券名稱", "-"),
                         "price": item.get("收盤價", "-"),
@@ -28,6 +33,7 @@ async def get_twse_price(stock_id: str, date: str = None) -> dict:
                         "low": item.get("最低價", "-"),
                         "volume": item.get("成交股數", "-"),
                         "date": item.get("日期", "-"),
+                        "ex_date": ex_date or "-",  # ➜ Optional: 備註推斷出的除息日
                         "source": "TWSE"
                     }
 
@@ -36,6 +42,7 @@ async def get_twse_price(stock_id: str, date: str = None) -> dict:
             return {"error": str(e)}
 
     return {"error": f"TWSE 查無股價資料 for {stock_id}"}
+
 
 
 async def get_twse_dividend(stock_id: str) -> dict:
