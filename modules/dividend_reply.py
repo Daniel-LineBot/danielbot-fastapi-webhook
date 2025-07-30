@@ -9,19 +9,34 @@ from loguru import logger
 
 
 async def get_dividend_info(stock_id: str) -> dict:
-    for source, fetcher in [
-        ("TWSE", get_twse_dividend),
-        ("集保", get_cdib_dividend),
-        ("FinMind", get_finmind_dividend)
-    ]:
+    source_chain = []
+
+    async def try_fetch(fetcher, label: str):
         try:
             data = await fetcher(stock_id)
-            if data and isinstance(data, dict) and len(data.keys()) > 1:
-                data["source"] = source
-                return data
+            if data and not data.get("error") and len(data) > 0:
+                source_chain.append(f"{label} ✔︎")
+                return {"source_chain": source_chain, "final_result": data}
+            else:
+                source_chain.append(f"{label} ✖︎")
         except Exception as e:
-            logger.warning(f"[Fallback] {source} 讀取失敗：{e}")
-    return {"error": "全部來源都查不到配息資料", "stock_id": stock_id}
+            source_chain.append(f"{label} ✖︎")
+        return None
+
+    for fetcher, label in [
+        (get_twse_dividend, "TWSE"),
+        (get_finmind_dividend, "FinMind"),
+        (get_tdcc_dividend, "TDCC")
+    ]:
+        result = await try_fetch(fetcher, label)
+        if result:
+            return result
+
+    # 全部 fallback 失敗
+    return {
+        "source_chain": source_chain,
+        "final_result": {"error": f"{stock_id} 查無任何股利資料"}
+    }
 
 
 
