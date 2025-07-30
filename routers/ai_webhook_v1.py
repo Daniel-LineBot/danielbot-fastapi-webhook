@@ -5,7 +5,8 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.exceptions import InvalidSignatureError
 import os, logging, re
 from asyncio import create_task
-from routers.ai_stock_v2 import get_stock_info, get_dividend_info
+from routers.ai_stock_v2 import get_stock_info
+from modules.dividend_reply import get_dividend_info
 from utils.query_metadata_parser import get_query_metadata
 from modules.reply_router import reply_router
 
