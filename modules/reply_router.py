@@ -1,6 +1,6 @@
 from modules.nlu import simple_nlu
 from modules.dividend_fetcher import fetch_all_dividend
-from formatter_twse import format_dividend as twse_formatter
+from utils.formatter_twse import format_dividend as twse_formatter
 from formatter_finmind import format_dividend as finmind_formatter
 from formatter_tdcc import format_dividend as tdcc_formatter
 
