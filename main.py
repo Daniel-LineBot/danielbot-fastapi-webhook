@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage 
 import os     
 
 from fastapi import FastAPI
