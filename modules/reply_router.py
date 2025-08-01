@@ -1,3 +1,4 @@
+
 from modules.nlu import simple_nlu
 from modules.dividend_fetcher import fetch_all_dividend
 from utils.formatter_twse import format_dividend as twse_formatter
@@ -12,6 +13,7 @@ def get_formatter(source: str):
         "TDCC": tdcc_formatter
     }.get(source, lambda x: f"[⚠️ 無 formatter] {source}")
 
+
 async def reply_router(user_text: str) -> dict:
     print(f"[DEBUG] user_text={user_text}")
     metadata = simple_nlu(user_text)
@@ -25,8 +27,15 @@ async def reply_router(user_text: str) -> dict:
         reply = f"{stock_id} {year or ''}配息資訊\n"
 
         for d in dividend_all:
-            formatter = get_formatter(d["source"])
-            reply += formatter(d["data"]) + "\n"
+            formatter = get_formatter(d.get("source", "Unknown"))
+            data = d.get("data")
+            if isinstance(data, dict):
+                try:
+                    reply += formatter(data) + "\n"
+                except Exception as e:
+                    reply += f"⚠️ 資料格式錯誤：{e}\n"
+            else:
+                reply += f"⚠️ 無法解析的資料：{data}\n"
 
         print(f"[DEBUG] reply={reply}")
         return {"text": reply}
